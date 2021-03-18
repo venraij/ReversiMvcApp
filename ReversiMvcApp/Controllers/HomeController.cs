@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using ReversiMvcApp.Data;
 using ReversiMvcApp.Models;
@@ -6,6 +7,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Security.Claims;
 using System.Threading.Tasks;
 
 namespace ReversiMvcApp.Controllers
@@ -20,11 +22,22 @@ namespace ReversiMvcApp.Controllers
             _logger = logger;
         }
 
+        [Authorize]
         public IActionResult Index()
         {
+            ClaimsPrincipal currentUser = this.User;
+            var currentUserID = currentUser.FindFirst(ClaimTypes.NameIdentifier).Value;
+
+            if (db.Speler.Find(currentUserID) == null)
+            {
+                Speler speler = new Speler();
+                speler.Guid = currentUserID;
+                db.Speler.Add(speler);
+                db.SaveChanges();
+            }
+
             return View();
         }
-
         public IActionResult Privacy()
         {
             return View();
