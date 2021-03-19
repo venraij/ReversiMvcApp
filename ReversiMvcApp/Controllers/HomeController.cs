@@ -16,8 +16,8 @@ namespace ReversiMvcApp.Controllers
 {
     public class HomeController : Controller
     {
-        private readonly ILogger<HomeController> _logger;
         private ReversiDbContext db = new ReversiDbContext();
+        private readonly ILogger<HomeController> _logger;
 
         public HomeController(ILogger<HomeController> logger)
         {
@@ -25,8 +25,10 @@ namespace ReversiMvcApp.Controllers
         }
 
         [Authorize]
-        public IActionResult Index()
+        public async Task<IActionResult> Index()
         {
+            string apiUrl = "https://localhost:5001/api/spel";
+
             ClaimsPrincipal currentUser = this.User;
             var currentUserID = currentUser.FindFirst(ClaimTypes.NameIdentifier).Value;
 
@@ -38,7 +40,25 @@ namespace ReversiMvcApp.Controllers
                 db.SaveChanges();
             }
 
-            return View();
+            using (HttpClient client = new HttpClient())
+            {
+                client.BaseAddress = new Uri(apiUrl);
+                client.DefaultRequestHeaders.Accept.Clear();
+                client.DefaultRequestHeaders.Accept.Add(new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/json"));
+
+                HttpResponseMessage response = await client.GetAsync(apiUrl);
+                if (response.IsSuccessStatusCode)
+                {
+                    var data = await response.Content.ReadAsStringAsync();
+                    var spelList = Newtonsoft.Json.JsonConvert.DeserializeObject<IEnumerable<Spel>>(data);
+                    spelList = spelList.ToList();
+                    return View(spelList);
+                }
+                else
+                {
+                    return View(new List<Spel>());
+                }
+            }
         }
         public IActionResult Privacy()
         {

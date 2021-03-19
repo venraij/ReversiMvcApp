@@ -1,10 +1,53 @@
-﻿
+﻿@model IEnumerable<ReversiMvcApp.Models.Spel>
+
 @{
     ViewData["Title"] = "Home Page";
 }
 
+<h1>Index</h1>
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://docs.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
-</div>
+<p>
+    <a asp-action="Create">Create New</a>
+</p>
+<table class="table">
+    <thead>
+        <tr>
+            <th>
+                @Html.DisplayNameFor(model => model.Token)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Omschrijving)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Speler1token)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Speler2token)
+            </th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+@foreach (var item in Model) {
+        <tr>
+            <td>
+                @Html.DisplayFor(modelItem => item.Token)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Omschrijving)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Speler1token)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Speler2token)
+            </td>
+            <td>
+                @Html.ActionLink("Edit", "Edit", new { /* id=item.PrimaryKey */ }) |
+                @Html.ActionLink("Details", "Details", new { /* id=item.PrimaryKey */ }) |
+                @Html.ActionLink("Delete", "Delete", new { /* id=item.PrimaryKey */ })
+            </td>
+        </tr>
+}
+    </tbody>
+</table>
