@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
 using ReversiMvcApp.Data;
 using ReversiMvcApp.Models;
 using System;
@@ -8,7 +9,9 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Security.Claims;
+using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 
@@ -51,8 +54,17 @@ namespace ReversiMvcApp.Controllers
                 {
                     var data = await response.Content.ReadAsStringAsync();
                     var spelList = Newtonsoft.Json.JsonConvert.DeserializeObject<IEnumerable<Spel>>(data);
-                    spelList = spelList.ToList();
-                    return View(spelList);
+                    List<Spel> spelListNo2nd = new List<Spel>();
+                    
+                    foreach (Spel spel in spelList)
+                    {
+                        if (String.IsNullOrEmpty(spel.Speler2token))
+                        {
+                            spelListNo2nd.Add(spel);
+                        }
+                    }
+
+                    return View(spelListNo2nd);
                 }
                 else
                 {
@@ -60,6 +72,58 @@ namespace ReversiMvcApp.Controllers
                 }
             }
         }
+
+        [Authorize]
+        public IActionResult Create()
+        {
+            return View();
+        }
+
+        [Authorize]
+        public IActionResult Details()
+        {
+            return View();
+        }
+
+        [Authorize]
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Create(string omschrijving)
+        {
+            string apiUrl = "https://localhost:5001/api/spel";
+            string currentUserID = this.User.FindFirst(ClaimTypes.NameIdentifier).Value;
+
+            Spel spel = new Spel();
+            spel.Omschrijving = omschrijving;
+            spel.Speler1token = currentUserID;
+
+            string json = System.Text.Json.JsonSerializer.Serialize<Spel>(spel);
+            StringContent content = new StringContent(json, Encoding.UTF8, "application/json");
+
+            try
+            {   
+                using (HttpClient client = new HttpClient())
+                {
+                    var response = await client.PostAsync(apiUrl, content);
+
+                    if (response.StatusCode == System.Net.HttpStatusCode.Created)
+                    {
+                        return View();
+                    } else
+                    {
+                        string returnValue = response.Content.ReadAsStringAsync().Result;
+                        throw new Exception($"Failed to POST data: ({response.StatusCode}): {returnValue}");
+                    }
+                }
+            }
+            catch
+            {
+                
+            }
+
+            return View();
+        }
+
         public IActionResult Privacy()
         {
             return View();
