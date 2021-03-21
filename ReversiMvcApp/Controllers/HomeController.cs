@@ -21,6 +21,7 @@ namespace ReversiMvcApp.Controllers
     {
         private ReversiDbContext db = new ReversiDbContext();
         private readonly ILogger<HomeController> _logger;
+        private bool alreadyConnected;
 
         public HomeController(ILogger<HomeController> logger)
         {
@@ -58,6 +59,11 @@ namespace ReversiMvcApp.Controllers
                     
                     foreach (Spel spel in spelList)
                     {
+                        if (spel.Speler1token == currentUserID || spel.Speler2token == currentUserID)
+                        {
+                            return RedirectToAction("Details", "Home", spel);
+                        }
+
                         if (String.IsNullOrEmpty(spel.Speler2token))
                         {
                             spelListNo2nd.Add(spel);
@@ -80,9 +86,20 @@ namespace ReversiMvcApp.Controllers
         }
 
         [Authorize]
-        public IActionResult Details()
+        public IActionResult Details(Spel spel)
         {
-            return View();
+            ClaimsPrincipal currentUser = this.User;
+            var currentUserID = currentUser.FindFirst(ClaimTypes.NameIdentifier).Value;
+
+            if (spel.Speler1token == currentUserID || spel.Speler2token == currentUserID)
+            {
+                ViewData["Connected"] = true;
+            } else
+            {
+                ViewData["Connected"] = false;
+            }
+
+            return View(spel);
         }
 
         [Authorize]
