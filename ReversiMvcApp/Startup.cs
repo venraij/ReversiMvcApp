@@ -8,6 +8,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using ReversiMvcApp.Data;
+using ReversiMvcApp.Hubs;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -34,7 +35,8 @@ namespace ReversiMvcApp
                 options.AddPolicy(name: MyAllowSpecificOrigins,
                                   builder =>
                                   {
-                                      builder.WithOrigins("http://localhost:5001");
+                                      builder.WithOrigins("http://localhost:44303",
+                                          "http://localhost:5001");
                                   });
             });
 
@@ -47,6 +49,7 @@ namespace ReversiMvcApp
             services.AddControllersWithViews();
             services.AddRazorPages();
             services.AddHttpClient();
+            services.AddSignalR();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -78,6 +81,7 @@ namespace ReversiMvcApp
                     name: "default",
                     pattern: "{controller=Home}/{action=Index}/{id?}");
                 endpoints.MapRazorPages();
+                endpoints.MapHub<GameHub>("/gameHub");
             });
         }
     }
