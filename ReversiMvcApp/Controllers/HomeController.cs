@@ -88,7 +88,7 @@ namespace ReversiMvcApp.Controllers
         [Authorize]
         public IActionResult Details(Spel spel)
         {
-            ClaimsPrincipal currentUser = this.User;
+            ClaimsPrincipal currentUser = User;
             var currentUserID = currentUser.FindFirst(ClaimTypes.NameIdentifier).Value;
 
             if (spel.Speler1token == currentUserID || spel.Speler2token == currentUserID)
@@ -98,7 +98,6 @@ namespace ReversiMvcApp.Controllers
             {
                 ViewData["Connected"] = false;
             }
-
             return View(spel);
         }
 

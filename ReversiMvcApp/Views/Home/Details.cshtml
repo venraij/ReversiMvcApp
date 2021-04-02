@@ -1,8 +1,8 @@
 ﻿@model ReversiMvcApp.Models.Spel
 
 @section Scripts {
+    <script type="text/javascript" src="~/js/signalr/dist/browser/signalr.js"></script>
     <script type="text/javascript" src="~/js/app.js"></script>
-    <script type="text/javascript" src="~/js/signalr/dist/browser/signalr.min.js"></script>
 }
 
 @{
@@ -11,40 +11,7 @@
 
 <h1>Details</h1>
 
-<div>
-    <h4>Spel</h4>
-
-    <hr />
-    <dl class="row">
-        <dt class="col-sm-2">
-            @Html.DisplayNameFor(model => model.Token)
-        </dt>
-        <dd class="col-sm-10">
-            @Html.DisplayFor(model => model.Token)
-        </dd>
-        <dt class="col-sm-2">
-            @Html.DisplayNameFor(model => model.Omschrijving)
-        </dt>
-        <dd class="col-sm-10">
-            @Html.DisplayFor(model => model.Omschrijving)
-        </dd>
-        <dt class="col-sm-2">
-            @Html.DisplayNameFor(model => model.Speler1token)
-        </dt>
-        <dd class="col-sm-10">
-            @Html.DisplayFor(model => model.Speler1token)
-        </dd>
-        <dt class="col-sm-2">
-            @Html.DisplayNameFor(model => model.Speler2token)
-        </dt>
-        <dd class="col-sm-10">
-            @Html.DisplayFor(model => model.Speler2token)
-        </dd>
-    </dl>
-</div>
-<div>
-    @Html.ActionLink("Edit", "Edit", new { /* id = Model.PrimaryKey */ }) |
-    <a asp-action="Index">Back to List</a>
+<div class="bord grid-container">
 </div>
 
 <div>
