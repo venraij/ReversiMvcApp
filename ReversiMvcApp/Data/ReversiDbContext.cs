@@ -13,7 +13,7 @@ namespace ReversiMvcApp.Data
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-            optionsBuilder.UseSqlServer("Data Source=(LocalDb)\\MSSQLLocalDB;Initial Catalog=reversiDb;Integrated Security=SSPI;");
+            optionsBuilder.UseSqlServer("Server=localhost;Database=s1149241;User Id=SA;Password=NickAlmelo69!");
         }
     }
 }
