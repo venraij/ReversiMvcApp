@@ -22,6 +22,7 @@ namespace ReversiMvcApp.Controllers
         private ReversiDbContext db = new ReversiDbContext();
         private readonly ILogger<HomeController> _logger;
         private bool alreadyConnected;
+        private string baseApiUrl = "http://localhost:5000/api/";
 
         public HomeController(ILogger<HomeController> logger)
         {
@@ -31,7 +32,7 @@ namespace ReversiMvcApp.Controllers
         [Authorize]
         public async Task<IActionResult> Index()
         {
-            string apiUrl = "https://localhost:5001/api/spel";
+            string apiUrl = baseApiUrl + "spel";
 
             ClaimsPrincipal currentUser = this.User;
             var currentUserID = currentUser.FindFirst(ClaimTypes.NameIdentifier).Value;
@@ -106,7 +107,7 @@ namespace ReversiMvcApp.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(string omschrijving)
         {
-            string apiUrl = "https://localhost:5001/api/spel";
+            string apiUrl = baseApiUrl + "spel";
             string currentUserID = this.User.FindFirst(ClaimTypes.NameIdentifier).Value;
 
             Spel spel = new Spel();
