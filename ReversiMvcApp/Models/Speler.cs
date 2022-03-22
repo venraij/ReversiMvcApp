@@ -10,7 +10,6 @@ namespace ReversiMvcApp.Models
     {
         [Key]
         public string Guid { get; set; }
-
         public string Naam { get; set; }
         public int AantalGewonnen { get; set; }
         public int AantalVerloren { get; set; }

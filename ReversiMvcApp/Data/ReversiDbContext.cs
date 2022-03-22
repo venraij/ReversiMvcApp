@@ -13,7 +13,7 @@ namespace ReversiMvcApp.Data
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-            optionsBuilder.UseSqlServer("Server=localhost;Database=s1149241;User Id=SA;Password=NickAlmelo69!");
+            optionsBuilder.UseSqlServer("Server=localhost;Database=s1149241;User Id=SA;Password=NickAlmelo69");
         }
     }
 }

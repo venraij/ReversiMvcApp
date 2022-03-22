@@ -1,87 +1,153 @@
-﻿using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.EntityFrameworkCore;
+using ReversiMvcApp.Data;
+using ReversiMvcApp.Models;
 
 namespace ReversiMvcApp.Controllers
 {
     public class SpelerController : Controller
     {
-        // GET: Speler
-        public ActionResult Index()
+        private readonly ReversiDbContext _context;
+
+        public SpelerController(ReversiDbContext context)
         {
-            return View();
+            _context = context;
+        }
+
+        // GET: Speler
+        public async Task<IActionResult> Index()
+        {
+            return View(await _context.Speler.ToListAsync());
         }
 
         // GET: Speler/Details/5
-        public ActionResult Details(int id)
+        public async Task<IActionResult> Details(string id)
         {
-            return View();
+            if (id == null)
+            {
+                return NotFound();
+            }
+
+            var speler = await _context.Speler
+                .FirstOrDefaultAsync(m => m.Guid == id);
+            if (speler == null)
+            {
+                return NotFound();
+            }
+
+            return View(speler);
         }
 
         // GET: Speler/Create
-        public ActionResult Create()
+        public IActionResult Create()
         {
             return View();
         }
 
         // POST: Speler/Create
+        // To protect from overposting attacks, enable the specific properties you want to bind to, for 
+        // more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult Create(IFormCollection collection)
+        public async Task<IActionResult> Create([Bind("Guid,Naam,AantalGewonnen,AantalVerloren,AantalGelijk")] Speler speler)
         {
-            try
+            if (ModelState.IsValid)
             {
+                _context.Add(speler);
+                await _context.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));
             }
-            catch
-            {
-                return View();
-            }
+            return View(speler);
         }
 
         // GET: Speler/Edit/5
-        public ActionResult Edit(int id)
+        public async Task<IActionResult> Edit(string id)
         {
-            return View();
+            if (id == null)
+            {
+                return NotFound();
+            }
+
+            var speler = await _context.Speler.FindAsync(id);
+            if (speler == null)
+            {
+                return NotFound();
+            }
+            return View(speler);
         }
 
         // POST: Speler/Edit/5
+        // To protect from overposting attacks, enable the specific properties you want to bind to, for 
+        // more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult Edit(int id, IFormCollection collection)
+        public async Task<IActionResult> Edit(string id, [Bind("Guid,Naam,AantalGewonnen,AantalVerloren,AantalGelijk")] Speler speler)
         {
-            try
+            if (id != speler.Guid)
             {
+                return NotFound();
+            }
+
+            if (ModelState.IsValid)
+            {
+                try
+                {
+                    _context.Update(speler);
+                    await _context.SaveChangesAsync();
+                }
+                catch (DbUpdateConcurrencyException)
+                {
+                    if (!SpelerExists(speler.Guid))
+                    {
+                        return NotFound();
+                    }
+                    else
+                    {
+                        throw;
+                    }
+                }
                 return RedirectToAction(nameof(Index));
             }
-            catch
-            {
-                return View();
-            }
+            return View(speler);
         }
 
         // GET: Speler/Delete/5
-        public ActionResult Delete(int id)
+        public async Task<IActionResult> Delete(string id)
         {
-            return View();
+            if (id == null)
+            {
+                return NotFound();
+            }
+
+            var speler = await _context.Speler
+                .FirstOrDefaultAsync(m => m.Guid == id);
+            if (speler == null)
+            {
+                return NotFound();
+            }
+
+            return View(speler);
         }
 
         // POST: Speler/Delete/5
-        [HttpPost]
+        [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
-        public ActionResult Delete(int id, IFormCollection collection)
+        public async Task<IActionResult> DeleteConfirmed(string id)
         {
-            try
-            {
-                return RedirectToAction(nameof(Index));
-            }
-            catch
-            {
-                return View();
-            }
+            var speler = await _context.Speler.FindAsync(id);
+            _context.Speler.Remove(speler);
+            await _context.SaveChangesAsync();
+            return RedirectToAction(nameof(Index));
+        }
+
+        private bool SpelerExists(string id)
+        {
+            return _context.Speler.Any(e => e.Guid == id);
         }
     }
 }

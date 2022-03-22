@@ -88,7 +88,7 @@ namespace ReversiMvcApp.Controllers
         [Authorize]
         public IActionResult Details(Spel spel)
         {
-            ClaimsPrincipal currentUser = User;
+            var currentUser = User;
             var currentUserID = currentUser.FindFirst(ClaimTypes.NameIdentifier).Value;
 
             if (spel.Speler1token == currentUserID || spel.Speler2token == currentUserID)
@@ -113,7 +113,7 @@ namespace ReversiMvcApp.Controllers
             spel.Omschrijving = omschrijving;
             spel.Speler1token = currentUserID;
 
-            string json = System.Text.Json.JsonSerializer.Serialize<Spel>(spel);
+            string json = JsonConvert.SerializeObject(spel);
             StringContent content = new StringContent(json, Encoding.UTF8, "application/json");
 
             try
