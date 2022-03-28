@@ -43,7 +43,7 @@ namespace ReversiMvcApp
                     builder =>
                     {
                         builder.WithOrigins("https://localhost:5001")
-                        .AllowCredentials();
+                            .AllowCredentials();
                     });
             });
         }

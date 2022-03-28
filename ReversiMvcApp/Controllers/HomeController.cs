@@ -22,7 +22,7 @@ namespace ReversiMvcApp.Controllers
         private ReversiDbContext db = new ReversiDbContext();
         private readonly ILogger<HomeController> _logger;
         private bool alreadyConnected;
-        private string baseApiUrl = "http://localhost:5000/api/";
+        private string baseApiUrl = "https://localhost:5001/api/";
 
         public HomeController(ILogger<HomeController> logger)
         {
@@ -108,7 +108,7 @@ namespace ReversiMvcApp.Controllers
         public async Task<IActionResult> Create(string omschrijving)
         {
             string apiUrl = baseApiUrl + "spel";
-            string currentUserID = this.User.FindFirst(ClaimTypes.NameIdentifier).Value;
+            string currentUserID = User.FindFirst(ClaimTypes.NameIdentifier).Value;
 
             Spel spel = new Spel();
             spel.Omschrijving = omschrijving;
