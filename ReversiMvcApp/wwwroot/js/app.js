@@ -1,5 +1,7 @@
 "use strict";
 
+var _this = void 0;
+
 function _createForOfIteratorHelper(o, allowArrayLike) { var it = typeof Symbol !== "undefined" && o[Symbol.iterator] || o["@@iterator"]; if (!it) { if (Array.isArray(o) || (it = _unsupportedIterableToArray(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = it.call(o); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it["return"] != null) it["return"](); } finally { if (didErr) throw err; } } }; }
 
 function _unsupportedIterableToArray(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray(o, minLen); }
@@ -107,54 +109,12 @@ var FeedbackWidget = /*#__PURE__*/function () {
 
 var connection = new signalR.HubConnectionBuilder().withUrl("https://localhost:5001/gameHub").configureLogging(signalR.LogLevel.Information).build(); //Disable send button until connection is established
 
-connection.on("ReceiveMessage", function (spel) {});
-connection.start().then(function () {// $.ajax({
-  //     method: "GET",
-  //     url: "" + "https://localhost:5001/api/spel?token=".concat(token),
-  //     contentType: "application/json; charset=utf-8",
-  //     success: function success(spel) {
-  //         const parsedSpel = JSON.parse(spel)[0];
-  //         let x = 0;
-  //         let y = 0;
-  //         parsedSpel["Bord"].forEach(function (row) {
-  //             row.forEach(function (cel) {
-  //                 const newCel = document.createElement("div");
-  //                 newCel.className = "cel y".concat("y", " x").concat(x);
-  //
-  //                 if (cel !== 0) {
-  //                     const newFiche = document.createElement("div");
-  //                     newFiche.className = "fiche";
-  //
-  //                     if (cel === 1) {
-  //                         newFiche.classList.add("wit");
-  //                     } else {
-  //                         newFiche.classList.add("zwart");
-  //                     }
-  //
-  //                     newCel.appendChild(newFiche);
-  //                 }
-  //
-  //                 x++;
-  //
-  //                 if (x === 8) {
-  //                     x = 0;
-  //                 }
-  //
-  //                 $(".bord").append(newCel);
-  //             });
-  //             y++;
-  //         });
-  //         $(".cel").on("click", async () => {
-  //             await Game.Reversi.doeZet(this.classList[2][1], this.classList[1][1]);
-  //         });
-  //     },
-  //     error: function error(xhr) {
-  //         console.error(xhr.error);
-  //     }
-  // });
+connection.start().then(function () {
+  Game.init();
 })["catch"](function (err) {
   return console.error(err.toString());
 });
+connection.on("ReceiveMessage", function (spel) {});
 
 var Game = function (url) {
   //Configuratie en state waarden
@@ -163,35 +123,99 @@ var Game = function (url) {
   };
   var stateMap = {
     gameState: 0,
+    token: null,
     bord: null,
-    token: null
+    speler1Token: null,
+    speler2Token: null
   }; // Private function init
 
   var privateInit = function privateInit() {
     var queryString = window.location.search;
     var urlParams = new URLSearchParams(queryString);
     var token = urlParams.get("Token");
-    console.log("Spel Token: ".concat(token));
+    Game.Model.init();
+    Game.Data.init("production");
+    Game.Reversi.init();
+    console.log('Spel Token:', token);
     stateMap.token = token;
 
-    _getBordState();
+    _getCurrentGameBord();
 
-    setInterval(_getCurrentGameState, 2000);
+    _getCurrentGameState();
   };
 
   var _getCurrentGameState = function _getCurrentGameState() {
     stateMap.gameState = Game.Model.getGameState(stateMap.token);
   };
 
-  var _getBordState = function _getBordState() {
-    stateMap.bord = Game.Model.getBordState(stateMap.token);
+  var _getCurrentGameBord = function _getCurrentGameBord() {
+    stateMap.bord = Game.Model.getGameBord(stateMap.token);
+    stateMap.bord.then(function (bord) {
+      var x = 0;
+      var y = 0;
+
+      var _iterator2 = _createForOfIteratorHelper(bord),
+          _step2;
+
+      try {
+        for (_iterator2.s(); !(_step2 = _iterator2.n()).done;) {
+          var row = _step2.value;
+
+          var _iterator3 = _createForOfIteratorHelper(row),
+              _step3;
+
+          try {
+            for (_iterator3.s(); !(_step3 = _iterator3.n()).done;) {
+              var cel = _step3.value;
+              var newCel = document.createElement("div");
+              newCel.className = "cel y".concat(y, " x").concat(x);
+
+              if (cel !== 0) {
+                var newFiche = document.createElement("div");
+                newFiche.className = "fiche";
+
+                if (cel === 1) {
+                  newFiche.classList.add("wit");
+                } else {
+                  newFiche.classList.add("zwart");
+                }
+
+                newCel.appendChild(newFiche);
+              }
+
+              x++;
+
+              if (x === 8) {
+                x = 0;
+              }
+
+              $(".bord").append(newCel);
+            }
+          } catch (err) {
+            _iterator3.e(err);
+          } finally {
+            _iterator3.f();
+          }
+
+          y++;
+        }
+      } catch (err) {
+        _iterator2.e(err);
+      } finally {
+        _iterator2.f();
+      }
+    }).then(function () {
+      $(".cell").click(function () {
+        Game.Reversi.doeZet(_this.classList[2][1], _this.classList[1][1]);
+      });
+    });
   }; // Waarde/object geretourneerd aan de outer scope
 
 
   return {
     init: privateInit
   };
-}("api/url");
+}("https://localhost:5001");
 
 Game.Reversi = function (url) {
   //Configuratie en state waarden
@@ -204,14 +228,18 @@ Game.Reversi = function (url) {
   };
 
   var _doeZet = function _doeZet(x, y) {
-    // const result = await fetch("http://localhost:5001/api/spel/zet")
-    $(".y".concat(y, ".x").concat(x)).append("<div class='fiche wit'></div>"); //
+    var zet = Game.Data.put("".concat(configMap.apiUrl, "/api/spel/zet"), [x, y]);
+
+    if (zet === "Succeeded") {
+      $(".y".concat(y, ".x").concat(x)).append("<div class='fiche wit'></div>");
+    } //
     // try {
     //     const conn = await connection.invoke("Zet", "test", [x, y])
     //     console.log(conn)
     // } catch (e) {
     //     console.error(e);
     // }
+
   }; // Waarde/object geretourneerd aan de outer scope
 
 
@@ -219,16 +247,18 @@ Game.Reversi = function (url) {
     init: privateInit,
     doeZet: _doeZet
   };
-}("api/url");
+}("https://localhost:5001");
 
 Game.Data = function (url) {
   //Configuratie en state waarden
   var configMap = {
-    // apiKey: "43dc00f93a9391ed42e2fcf92c22064b",
     mock: [{
       url: "api/Spel/Beurt",
       data: 0
-    }]
+    }, {
+      url: "api/Spel"
+    }],
+    apiUrl: url
   };
   var stateMap = {
     environment: 'development'
@@ -246,8 +276,21 @@ Game.Data = function (url) {
     }
   };
 
+  var put = function put(url, data) {
+    if (stateMap.environment === "production") {
+      return $.ajax({
+        url: url,
+        data: data,
+        type: "PUT"
+      }).success(function (data) {
+        return data;
+      }).error(function (errorMessage) {
+        console.log(errorMessage);
+      });
+    }
+  };
+
   var getMockData = function getMockData(url) {
-    //filter mock data, configMap.mock ... oei oei, moeilijk moeilijk :-)
     var mockData = configMap.mock.find(function (x) {
       return x.url === url;
     });
@@ -268,9 +311,11 @@ Game.Data = function (url) {
 
 
   return {
-    init: privateInit
+    init: privateInit,
+    get: get,
+    put: put
   };
-}("api/url");
+}("https://localhost:5001");
 
 Game.Model = function (url) {
   //Configuratie en state waarden
@@ -285,7 +330,7 @@ Game.Model = function (url) {
   var _getGameState = function _getGameState(token) {
     return new Promise(function (resolve, reject) {
       //aanvraag via Game.Data
-      Game.Data.get("/api/Spel/Beurt/".concat(token)).then(function (r) {
+      Game.Data.get("".concat(configMap.apiUrl, "/api/Spel/Beurt?Token=").concat(token)).then(function (r) {
         if (r === 0 || r === 1 || r === 2) {
           resolve(r);
         } else {
@@ -295,16 +340,11 @@ Game.Model = function (url) {
     });
   };
 
-  var _getBordState = function _getBordState(token) {
+  var _getGameBord = function _getGameBord(token) {
     return new Promise(function (resolve, reject) {
-      fetch("https://localhost:5001/api/spel?token=".concat(token)).then(function (res) {
-        return res.json();
-      }).then(function (data) {
-        if (data.length > 0) {
-          var spel = data[0];
-          console.log("Spel", spel);
-          resolve(spel.bord);
-        }
+      Game.Data.get("".concat(configMap.apiUrl, "/api/Spel?Token=").concat(token)).then(function (r) {
+        console.log(JSON.parse(r));
+        resolve(JSON.parse(r)[0].Bord);
       });
     });
   }; // Waarde/object geretourneerd aan de outer scope
@@ -313,6 +353,6 @@ Game.Model = function (url) {
   return {
     init: privateInit,
     getGameState: _getGameState,
-    getBordState: _getBordState
+    getGameBord: _getGameBord
   };
-}("api/url");
+}("https://localhost:5001");
