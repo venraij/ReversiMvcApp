@@ -1,7 +1,5 @@
 "use strict";
 
-var _this = void 0;
-
 function _createForOfIteratorHelper(o, allowArrayLike) { var it = typeof Symbol !== "undefined" && o[Symbol.iterator] || o["@@iterator"]; if (!it) { if (Array.isArray(o) || (it = _unsupportedIterableToArray(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = it.call(o); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it["return"] != null) it["return"](); } finally { if (didErr) throw err; } } }; }
 
 function _unsupportedIterableToArray(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray(o, minLen); }
@@ -139,18 +137,20 @@ var Game = function (url) {
     console.log('Spel Token:', token);
     stateMap.token = token;
 
-    _getCurrentGameBord();
-
     _getCurrentGameState();
+
+    _getCurrentGameBord();
   };
 
   var _getCurrentGameState = function _getCurrentGameState() {
-    stateMap.gameState = Game.Model.getGameState(stateMap.token);
+    Game.Model.getGameState(stateMap.token).then(function (res) {
+      stateMap.gameState = res;
+    });
   };
 
   var _getCurrentGameBord = function _getCurrentGameBord() {
-    stateMap.bord = Game.Model.getGameBord(stateMap.token);
-    stateMap.bord.then(function (bord) {
+    Game.Model.getGameBord(stateMap.token).then(function (bord) {
+      stateMap.bord = bord;
       var x = 0;
       var y = 0;
 
@@ -165,10 +165,14 @@ var Game = function (url) {
               _step3;
 
           try {
-            for (_iterator3.s(); !(_step3 = _iterator3.n()).done;) {
+            var _loop = function _loop() {
               var cel = _step3.value;
               var newCel = document.createElement("div");
               newCel.className = "cel y".concat(y, " x").concat(x);
+
+              newCel.onclick = function () {
+                Game.Reversi.doeZet(newCel.classList[2][1], newCel.classList[1][1], stateMap.token);
+              };
 
               if (cel !== 0) {
                 var newFiche = document.createElement("div");
@@ -190,6 +194,10 @@ var Game = function (url) {
               }
 
               $(".bord").append(newCel);
+            };
+
+            for (_iterator3.s(); !(_step3 = _iterator3.n()).done;) {
+              _loop();
             }
           } catch (err) {
             _iterator3.e(err);
@@ -204,10 +212,6 @@ var Game = function (url) {
       } finally {
         _iterator2.f();
       }
-    }).then(function () {
-      $(".cell").click(function () {
-        Game.Reversi.doeZet(_this.classList[2][1], _this.classList[1][1]);
-      });
     });
   }; // Waarde/object geretourneerd aan de outer scope
 
@@ -227,19 +231,26 @@ Game.Reversi = function (url) {
     console.log(configMap.apiUrl);
   };
 
-  var _doeZet = function _doeZet(x, y) {
-    var zet = Game.Data.put("".concat(configMap.apiUrl, "/api/spel/zet"), [x, y]);
+  var _doeZet = function _doeZet(x, y, spelToken) {
+    Game.Data.put("".concat(configMap.apiUrl, "/api/spel/zet"), [x, y], spelToken).then(function (zet) {
+      Game.Model.getGameState(spelToken).then(function (gameState) {
+        console.log(zet);
 
-    if (zet === "Succeeded") {
-      $(".y".concat(y, ".x").concat(x)).append("<div class='fiche wit'></div>");
-    } //
+        if (zet === "Succeeded") {
+          if (gameState === 2) {
+            $(".y".concat(y, ".x").concat(x)).append("<div class='fiche zwart'></div>");
+          } else if (gameState === 1) {
+            $(".y".concat(y, ".x").concat(x)).append("<div class='fiche wit'></div>");
+          }
+        }
+      });
+    }); //
     // try {
     //     const conn = await connection.invoke("Zet", "test", [x, y])
     //     console.log(conn)
     // } catch (e) {
     //     console.error(e);
     // }
-
   }; // Waarde/object geretourneerd aan de outer scope
 
 
@@ -268,24 +279,29 @@ Game.Data = function (url) {
     if (stateMap.environment === "development") {
       return getMockData(url);
     } else if (stateMap.environment === "production") {
-      return $.get(url).then(function (r) {
-        return r;
-      })["catch"](function (e) {
-        console.log(e.message);
+      return fetch(url, {
+        method: "GET"
+      }).then(function (res) {
+        return res.json();
+      })["catch"](function (error) {
+        console.log(error);
       });
     }
   };
 
-  var put = function put(url, data) {
+  var put = function put(url, data, spelToken) {
     if (stateMap.environment === "production") {
-      return $.ajax({
-        url: url,
-        data: data,
-        type: "PUT"
-      }).success(function (data) {
-        return data;
-      }).error(function (errorMessage) {
-        console.log(errorMessage);
+      return fetch(url, {
+        method: "PUT",
+        headers: {
+          'Content-Type': 'application/json',
+          'spelToken': spelToken
+        },
+        body: JSON.stringify(data)
+      }).then(function (res) {
+        return res.json();
+      })["catch"](function (error) {
+        console.log(error);
       });
     }
   };
@@ -343,8 +359,7 @@ Game.Model = function (url) {
   var _getGameBord = function _getGameBord(token) {
     return new Promise(function (resolve, reject) {
       Game.Data.get("".concat(configMap.apiUrl, "/api/Spel?Token=").concat(token)).then(function (r) {
-        console.log(JSON.parse(r));
-        resolve(JSON.parse(r)[0].Bord);
+        resolve(r[0].Bord);
       });
     });
   }; // Waarde/object geretourneerd aan de outer scope
