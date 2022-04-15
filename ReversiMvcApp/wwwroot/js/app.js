@@ -105,15 +105,6 @@ var FeedbackWidget = /*#__PURE__*/function () {
   return FeedbackWidget;
 }();
 
-var connection = new signalR.HubConnectionBuilder().withUrl("https://localhost:5001/gameHub").configureLogging(signalR.LogLevel.Information).build(); //Disable send button until connection is established
-
-connection.start().then(function () {
-  Game.init();
-})["catch"](function (err) {
-  return console.error(err.toString());
-});
-connection.on("ReceiveMessage", function (spel) {});
-
 var Game = function (url) {
   //Configuratie en state waarden
   var configMap = {
@@ -122,146 +113,165 @@ var Game = function (url) {
   var stateMap = {
     gameState: 0,
     token: null,
-    bord: null,
-    speler1Token: null,
-    speler2Token: null
+    bord: null
   }; // Private function init
 
   var privateInit = function privateInit() {
     var queryString = window.location.search;
     var urlParams = new URLSearchParams(queryString);
-    var token = urlParams.get("Token");
+    var token = urlParams.get("Guid");
     Game.Model.init();
     Game.Data.init("production");
     Game.Reversi.init();
-    console.log('Spel Token:', token);
+    console.log('Speler Token:', token);
     stateMap.token = token;
+    setInterval(_getCurrentGameState, 2000);
 
-    _getCurrentGameState();
+    _getCurrentGameBordState().then(function () {
+      Game.Reversi.drawBord(token, stateMap.bord);
+    });
 
-    _getCurrentGameBord();
+    Game.Data.connection.start()["catch"](function (err) {
+      return console.error(err.toString());
+    });
   };
 
   var _getCurrentGameState = function _getCurrentGameState() {
-    Game.Model.getGameState(stateMap.token).then(function (res) {
-      stateMap.gameState = res;
+    Game.Model.getGameState(stateMap.token).then(function (gameState) {
+      console.log("New Game State:", gameState);
+      stateMap.gameState = gameState;
     });
   };
 
-  var _getCurrentGameBord = function _getCurrentGameBord() {
-    Game.Model.getGameBord(stateMap.token).then(function (bord) {
-      stateMap.bord = bord;
-      var x = 0;
-      var y = 0;
-
-      var _iterator2 = _createForOfIteratorHelper(bord),
-          _step2;
-
-      try {
-        for (_iterator2.s(); !(_step2 = _iterator2.n()).done;) {
-          var row = _step2.value;
-
-          var _iterator3 = _createForOfIteratorHelper(row),
-              _step3;
-
-          try {
-            var _loop = function _loop() {
-              var cel = _step3.value;
-              var newCel = document.createElement("div");
-              newCel.className = "cel y".concat(y, " x").concat(x);
-
-              newCel.onclick = function () {
-                Game.Reversi.doeZet(newCel.classList[2][1], newCel.classList[1][1], stateMap.token);
-              };
-
-              if (cel !== 0) {
-                var newFiche = document.createElement("div");
-                newFiche.className = "fiche";
-
-                if (cel === 1) {
-                  newFiche.classList.add("wit");
-                } else {
-                  newFiche.classList.add("zwart");
-                }
-
-                newCel.appendChild(newFiche);
-              }
-
-              x++;
-
-              if (x === 8) {
-                x = 0;
-              }
-
-              $(".bord").append(newCel);
-            };
-
-            for (_iterator3.s(); !(_step3 = _iterator3.n()).done;) {
-              _loop();
-            }
-          } catch (err) {
-            _iterator3.e(err);
-          } finally {
-            _iterator3.f();
-          }
-
-          y++;
-        }
-      } catch (err) {
-        _iterator2.e(err);
-      } finally {
-        _iterator2.f();
-      }
-    });
-  }; // Waarde/object geretourneerd aan de outer scope
-
-
-  return {
-    init: privateInit
-  };
-}("https://localhost:5001");
-
-Game.Reversi = function (url) {
-  //Configuratie en state waarden
-  var configMap = {
-    apiUrl: url
-  }; // Private function init
-
-  var privateInit = function privateInit() {
-    console.log(configMap.apiUrl);
-  };
-
-  var _doeZet = function _doeZet(x, y, spelToken) {
-    Game.Data.put("".concat(configMap.apiUrl, "/api/spel/zet"), [x, y], spelToken).then(function (zet) {
-      Game.Model.getGameState(spelToken).then(function (gameState) {
-        console.log(zet);
-
-        if (zet === "Succeeded") {
-          if (gameState === 2) {
-            $(".y".concat(y, ".x").concat(x)).append("<div class='fiche zwart'></div>");
-          } else if (gameState === 1) {
-            $(".y".concat(y, ".x").concat(x)).append("<div class='fiche wit'></div>");
-          }
-        }
+  var _getCurrentGameBordState = function _getCurrentGameBordState() {
+    return new Promise(function (resolve, reject) {
+      Game.Model.getGameBord(stateMap.token).then(function (bord) {
+        console.log("New Game State:", bord);
+        resolve(stateMap.bord = bord);
       });
-    }); //
-    // try {
-    //     const conn = await connection.invoke("Zet", "test", [x, y])
-    //     console.log(conn)
-    // } catch (e) {
-    //     console.error(e);
-    // }
+    });
   }; // Waarde/object geretourneerd aan de outer scope
 
 
   return {
     init: privateInit,
-    doeZet: _doeZet
+    getCurrentGameState: _getCurrentGameState,
+    getCurrentGameBordState: _getCurrentGameBordState
   };
 }("https://localhost:5001");
 
+Game.Reversi = function () {
+  // Private function init
+  var privateInit = function privateInit() {};
+
+  var _drawBord = function _drawBord(token, bord) {
+    var x = 0;
+    var y = 0;
+    var htmlBord = $(".bord");
+
+    var _iterator2 = _createForOfIteratorHelper(bord),
+        _step2;
+
+    try {
+      for (_iterator2.s(); !(_step2 = _iterator2.n()).done;) {
+        var row = _step2.value;
+
+        var _iterator3 = _createForOfIteratorHelper(row),
+            _step3;
+
+        try {
+          for (_iterator3.s(); !(_step3 = _iterator3.n()).done;) {
+            var cel = _step3.value;
+
+            if (htmlBord.children().length < 8 * 8) {
+              (function () {
+                var newCel = document.createElement("div");
+                newCel.className = "cel y".concat(y, " x").concat(x);
+
+                newCel.onclick = function () {
+                  Game.Reversi.doeZet(newCel.classList[2][1], newCel.classList[1][1], token);
+                };
+
+                htmlBord.append(newCel);
+              })();
+            }
+
+            if (cel !== 0) {
+              console.log("Placing fiche at:", "y".concat(y, " x").concat(x));
+              var htmlCel = $(".cel.y".concat(y, ".x").concat(x));
+              var newFiche = document.createElement("div");
+              newFiche.className = "fiche";
+
+              if (cel === 1) {
+                newFiche.classList.add("wit");
+              } else {
+                newFiche.classList.add("zwart");
+              }
+
+              var existingFiche = htmlCel.firstChild;
+
+              if (existingFiche) {
+                if (cel === 1 && existingFiche.classList.includes("zwart")) {
+                  htmlCel.empty();
+                  htmlCel.append(newFiche);
+                } else if (cel === 2 && existingFiche.classList.includes("wit")) {
+                  htmlCel.empty();
+                  htmlCel.append(newFiche);
+                }
+              } else {
+                htmlCel.append(newFiche);
+              }
+            }
+
+            x++;
+
+            if (x === 8) {
+              x = 0;
+            }
+          }
+        } catch (err) {
+          _iterator3.e(err);
+        } finally {
+          _iterator3.f();
+        }
+
+        y++;
+      }
+    } catch (err) {
+      _iterator2.e(err);
+    } finally {
+      _iterator2.f();
+    }
+  };
+
+  var _doeZet = function _doeZet(x, y, token) {
+    try {
+      Game.Data.connection.invoke("Zet", parseInt(x), parseInt(y), token);
+      Game.Data.connection.on("ZetDone", function (gameState, status, bord) {
+        console.log("New Bord:", JSON.parse(bord), status);
+
+        if (status === "SUCCEEDED") {
+          _drawBord(token, JSON.parse(bord));
+        }
+      });
+    } catch (e) {
+      console.error(e);
+    }
+  }; // Waarde/object geretourneerd aan de outer scope
+
+
+  return {
+    init: privateInit,
+    doeZet: _doeZet,
+    drawBord: _drawBord
+  };
+}();
+
 Game.Data = function (url) {
-  //Configuratie en state waarden
+  var stateMap = {
+    environment: 'development'
+  }; //Configuratie en state waarden
+
   var configMap = {
     mock: [{
       url: "api/Spel/Beurt",
@@ -270,9 +280,6 @@ Game.Data = function (url) {
       url: "api/Spel"
     }],
     apiUrl: url
-  };
-  var stateMap = {
-    environment: 'development'
   };
 
   var get = function get(url) {
@@ -306,6 +313,8 @@ Game.Data = function (url) {
     }
   };
 
+  var connection = new signalR.HubConnectionBuilder().withUrl("https://localhost:5001/gameHub").configureLogging(signalR.LogLevel.Information).build(); //Disable send button until connection is established
+
   var getMockData = function getMockData(url) {
     var mockData = configMap.mock.find(function (x) {
       return x.url === url;
@@ -329,7 +338,8 @@ Game.Data = function (url) {
   return {
     init: privateInit,
     get: get,
-    put: put
+    put: put,
+    connection: connection
   };
 }("https://localhost:5001");
 
@@ -346,7 +356,7 @@ Game.Model = function (url) {
   var _getGameState = function _getGameState(token) {
     return new Promise(function (resolve, reject) {
       //aanvraag via Game.Data
-      Game.Data.get("".concat(configMap.apiUrl, "/api/Spel/Beurt?Token=").concat(token)).then(function (r) {
+      Game.Data.get("".concat(configMap.apiUrl, "/api/Spel/Beurt/").concat(token)).then(function (r) {
         if (r === 0 || r === 1 || r === 2) {
           resolve(r);
         } else {
@@ -358,8 +368,8 @@ Game.Model = function (url) {
 
   var _getGameBord = function _getGameBord(token) {
     return new Promise(function (resolve, reject) {
-      Game.Data.get("".concat(configMap.apiUrl, "/api/Spel?Token=").concat(token)).then(function (r) {
-        resolve(r[0].Bord);
+      Game.Data.get("".concat(configMap.apiUrl, "/api/Spel/").concat(token)).then(function (r) {
+        resolve(r.Bord);
       });
     });
   }; // Waarde/object geretourneerd aan de outer scope
@@ -371,3 +381,5 @@ Game.Model = function (url) {
     getGameBord: _getGameBord
   };
 }("https://localhost:5001");
+
+Game.init();

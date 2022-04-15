@@ -7,12 +7,9 @@ using ReversiMvcApp.Models;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
 using System.Net.Http;
-using System.Net.Http.Headers;
 using System.Security.Claims;
 using System.Text;
-using System.Text.Json;
 using System.Threading.Tasks;
 
 namespace ReversiMvcApp.Controllers
@@ -34,12 +31,13 @@ namespace ReversiMvcApp.Controllers
         {
             string apiUrl = baseApiUrl + "spel";
 
-            ClaimsPrincipal currentUser = this.User;
+            ClaimsPrincipal currentUser = User;
             var currentUserID = currentUser.FindFirst(ClaimTypes.NameIdentifier).Value;
+            Speler speler = db.Speler.Find(currentUserID);
 
-            if (db.Speler.Find(currentUserID) == null)
+            if (speler == null)
             {
-                Speler speler = new Speler();
+                speler = new Speler();
                 speler.Guid = currentUserID;
                 db.Speler.Add(speler);
                 db.SaveChanges();
@@ -55,14 +53,14 @@ namespace ReversiMvcApp.Controllers
                 if (response.IsSuccessStatusCode)
                 {
                     var data = await response.Content.ReadAsStringAsync();
-                    var spelList = Newtonsoft.Json.JsonConvert.DeserializeObject<IEnumerable<Spel>>(data);
+                    var spelList = JsonConvert.DeserializeObject<IEnumerable<Spel>>(data);
                     List<Spel> spelListNo2nd = new List<Spel>();
                     
                     foreach (Spel spel in spelList)
                     {
                         if (spel.Speler1token == currentUserID || spel.Speler2token == currentUserID)
                         {
-                            return RedirectToAction("Details", "Home", spel);
+                            return RedirectToAction("Details", "Home", speler);
                         }
 
                         if (String.IsNullOrEmpty(spel.Speler2token))
