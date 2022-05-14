@@ -183,7 +183,7 @@ Game.Reversi = function () {
           for (_iterator3.s(); !(_step3 = _iterator3.n()).done;) {
             var cel = _step3.value;
 
-            if (htmlBord.children().length < 8 * 8) {
+            if (htmlBord.children().length !== bord.length * row.length) {
               (function () {
                 var newCel = document.createElement("div");
                 newCel.className = "cel y".concat(y, " x").concat(x);
@@ -196,31 +196,32 @@ Game.Reversi = function () {
               })();
             }
 
-            if (cel !== 0) {
-              console.log("Placing fiche at:", "y".concat(y, " x").concat(x));
-              var htmlCel = $(".cel.y".concat(y, ".x").concat(x));
-              var newFiche = document.createElement("div");
-              newFiche.className = "fiche";
+            var htmlCel = $(".cel.y".concat(y, ".x").concat(x));
+            var newFiche = document.createElement("div");
+            newFiche.className = "fiche";
 
-              if (cel === 1) {
-                newFiche.classList.add("wit");
-              } else {
-                newFiche.classList.add("zwart");
-              }
+            if (cel === 1) {
+              newFiche.classList.add("wit");
+            } else if (cel === 2) {
+              newFiche.classList.add("zwart");
+            }
 
-              var existingFiche = htmlCel.firstChild;
+            if (htmlCel.children('div').length > 0) {
+              console.log("Replacing fiche at:", "y".concat(y, " x").concat(x));
+              console.log("Old fiche:", htmlCel.children('div')[0]);
 
-              if (existingFiche) {
-                if (cel === 1 && existingFiche.classList.includes("zwart")) {
-                  htmlCel.empty();
-                  htmlCel.append(newFiche);
-                } else if (cel === 2 && existingFiche.classList.includes("wit")) {
-                  htmlCel.empty();
-                  htmlCel.append(newFiche);
-                }
-              } else {
+              if (cel === 1 && htmlCel.children('div')[0].classList.contains("zwart")) {
+                htmlCel.empty();
+                console.log(htmlCel);
+                htmlCel.append(newFiche);
+              } else if (cel === 2 && htmlCel.children('div')[0].classList.contains("wit")) {
+                htmlCel.empty();
+                console.log(htmlCel);
                 htmlCel.append(newFiche);
               }
+            } else if (cel !== 0) {
+              console.log("Placing fiche at:", "y".concat(y, " x").concat(x));
+              htmlCel.append(newFiche);
             }
 
             x++;
