@@ -180,20 +180,18 @@ Game.Reversi = function () {
             _step3;
 
         try {
-          for (_iterator3.s(); !(_step3 = _iterator3.n()).done;) {
+          var _loop = function _loop() {
             var cel = _step3.value;
 
             if (htmlBord.children().length !== bord.length * row.length) {
-              (function () {
-                var newCel = document.createElement("div");
-                newCel.className = "cel y".concat(y, " x").concat(x);
+              var newCel = document.createElement("div");
+              newCel.className = "cel y".concat(y, " x").concat(x);
 
-                newCel.onclick = function () {
-                  Game.Reversi.doeZet(newCel.classList[2][1], newCel.classList[1][1], token);
-                };
+              newCel.onclick = function () {
+                Game.Reversi.doeZet(newCel.classList[2][1], newCel.classList[1][1], token);
+              };
 
-                htmlBord.append(newCel);
-              })();
+              htmlBord.append(newCel);
             }
 
             var htmlCel = $(".cel.y".concat(y, ".x").concat(x));
@@ -210,14 +208,14 @@ Game.Reversi = function () {
               console.log("Replacing fiche at:", "y".concat(y, " x").concat(x));
               console.log("Old fiche:", htmlCel.children('div')[0]);
 
-              if (cel === 1 && htmlCel.children('div')[0].classList.contains("zwart")) {
-                htmlCel.empty();
-                console.log(htmlCel);
-                htmlCel.append(newFiche);
-              } else if (cel === 2 && htmlCel.children('div')[0].classList.contains("wit")) {
-                htmlCel.empty();
-                console.log(htmlCel);
-                htmlCel.append(newFiche);
+              if (cel === 1 && htmlCel.children('div')[0].classList.contains("zwart") || cel === 2 && htmlCel.children('div')[0].classList.contains("wit")) {
+                htmlCel.children('div')[0].style.opacity = "0.4";
+                htmlCel.children('div')[0].style.opacity = "0.0";
+                setTimeout(function () {
+                  htmlCel.empty();
+                  console.log(htmlCel);
+                  htmlCel.append(newFiche);
+                }, 500);
               }
             } else if (cel !== 0) {
               console.log("Placing fiche at:", "y".concat(y, " x").concat(x));
@@ -229,6 +227,10 @@ Game.Reversi = function () {
             if (x === 8) {
               x = 0;
             }
+          };
+
+          for (_iterator3.s(); !(_step3 = _iterator3.n()).done;) {
+            _loop();
           }
         } catch (err) {
           _iterator3.e(err);
