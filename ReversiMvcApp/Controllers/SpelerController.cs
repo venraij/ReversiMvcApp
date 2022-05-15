@@ -149,5 +149,38 @@ namespace ReversiMvcApp.Controllers
         {
             return _context.Speler.Any(e => e.Guid == id);
         }
+        
+        // POST: Speler/Score/{id}
+        [HttpPatch("score/{id}")]
+        public async Task<IActionResult> UpdateSpelerScore(string id, [FromBody] string winStatusType)
+        {
+            if (id == null)
+            {
+                return NotFound();
+            }
+
+            var speler = await _context.Speler
+                .FirstOrDefaultAsync(m => m.Guid == id);
+            
+            if (speler == null)
+            {
+                return NotFound();
+            }
+
+            switch (winStatusType)
+            {
+                case "GEWONNEN":
+                    speler.AantalGewonnen += 1;
+                    break;
+                case "VERLOREN":
+                    speler.AantalVerloren += 1;
+                    break;
+                case "GELIJK":
+                    speler.AantalGelijk += 1;
+                    break;
+            }
+            
+            return Ok();
+        }
     }
 }

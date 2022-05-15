@@ -245,6 +245,8 @@ Game.Reversi = function () {
     } finally {
       _iterator2.f();
     }
+
+    _checkAfgelopen(token);
   };
 
   var _doeZet = function _doeZet(x, y, token) {
@@ -260,6 +262,91 @@ Game.Reversi = function () {
     } catch (e) {
       console.error(e);
     }
+  };
+
+  var _checkAfgelopen = function _checkAfgelopen(token) {
+    Game.Model.getAfgelopen(token).then(function (bord) {
+      if (bord === "Niet afgelopen") {
+        return;
+      }
+
+      console.log("Spel is afgelopen:", bord);
+      var bordElement = $(".bord");
+      bordElement.empty();
+      var witScore = 0;
+      var zwartScore = 0;
+
+      var _iterator4 = _createForOfIteratorHelper(bord),
+          _step4;
+
+      try {
+        for (_iterator4.s(); !(_step4 = _iterator4.n()).done;) {
+          var row = _step4.value;
+
+          var _iterator5 = _createForOfIteratorHelper(row),
+              _step5;
+
+          try {
+            for (_iterator5.s(); !(_step5 = _iterator5.n()).done;) {
+              var column = _step5.value;
+
+              switch (column) {
+                case 1:
+                  witScore += 1;
+                  break;
+
+                case 2:
+                  zwartScore += 1;
+                  break;
+              }
+            }
+          } catch (err) {
+            _iterator5.e(err);
+          } finally {
+            _iterator5.f();
+          }
+        }
+      } catch (err) {
+        _iterator4.e(err);
+      } finally {
+        _iterator4.f();
+      }
+
+      var winnerString;
+      var winnerScore;
+
+      if (witScore > zwartScore) {
+        winnerString = "wit";
+        winnerScore = witScore;
+      } else if (witScore === zwartScore) {
+        winnerString = "none";
+      } else if (zwartScore > witScore) {
+        winnerString = "zwart";
+        winnerScore = zwartScore;
+      }
+
+      var scoresElement = document.createElement("ul");
+      scoresElement.className = "scores-list";
+      bordElement.append(scoresElement);
+      var witScoreElement = document.createElement("li");
+      witScoreElement.className = "score";
+      witScoreElement.textContent = "Wit: ".concat(witScore, " punten");
+      scoresElement.append(witScoreElement);
+      var zwartScoreElement = document.createElement("li");
+      zwartScoreElement.className = "score";
+      zwartScoreElement.textContent = "Zwart: ".concat(zwartScore, " punten");
+      scoresElement.append(zwartScoreElement);
+      var winnerScoreElement = document.createElement("li");
+      winnerScoreElement.className = "winner-score";
+
+      if (winnerString === "none") {
+        winnerScoreElement.textContent = "Gelijkspel!";
+      } else {
+        winnerScoreElement.textContent = "De winnaar is ".concat(winnerString, " met ").concat(winnerScore, " punten!");
+      }
+
+      scoresElement.append(winnerScoreElement);
+    });
   }; // Waarde/object geretourneerd aan de outer scope
 
 
@@ -316,6 +403,23 @@ Game.Data = function (url) {
     }
   };
 
+  var patch = function patch(url, data, spelToken) {
+    if (stateMap.environment === "production") {
+      return fetch(url, {
+        method: "PATCH",
+        headers: {
+          'Content-Type': 'application/json',
+          'spelToken': spelToken
+        },
+        body: JSON.stringify(data)
+      }).then(function (res) {
+        return res.json();
+      })["catch"](function (error) {
+        console.log(error);
+      });
+    }
+  };
+
   var connection = new signalR.HubConnectionBuilder().withUrl("https://localhost:5001/gameHub").configureLogging(signalR.LogLevel.Information).build(); //Disable send button until connection is established
 
   var getMockData = function getMockData(url) {
@@ -342,6 +446,7 @@ Game.Data = function (url) {
     init: privateInit,
     get: get,
     put: put,
+    patch: patch,
     connection: connection
   };
 }("https://localhost:5001");
@@ -369,10 +474,28 @@ Game.Model = function (url) {
     });
   };
 
+  var _getAfgelopen = function _getAfgelopen(token) {
+    return new Promise(function (resolve, reject) {
+      Game.Data.get("".concat(configMap.apiUrl, "/api/Spel/afgelopen/").concat(token)).then(function (r) {
+        resolve(r.Bord);
+      });
+    });
+  };
+
   var _getGameBord = function _getGameBord(token) {
     return new Promise(function (resolve, reject) {
       Game.Data.get("".concat(configMap.apiUrl, "/api/Spel/").concat(token)).then(function (r) {
         resolve(r.Bord);
+      });
+    });
+  };
+
+  var _updatePlayerWins = function _updatePlayerWins(winStatusType, token) {
+    return new Promise(function (resolve, reject) {
+      Game.Data.patch("/Speler/score", {
+        winStatusType: winStatusType
+      }, token).then(function (r) {
+        resolve(r);
       });
     });
   }; // Waarde/object geretourneerd aan de outer scope
@@ -381,7 +504,9 @@ Game.Model = function (url) {
   return {
     init: privateInit,
     getGameState: _getGameState,
-    getGameBord: _getGameBord
+    getGameBord: _getGameBord,
+    getAfgelopen: _getAfgelopen,
+    updatePlayerWins: _updatePlayerWins
   };
 }("https://localhost:5001");
 

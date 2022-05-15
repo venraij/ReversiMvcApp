@@ -1,20 +1,35 @@
-:host .bord {
-  background-color: #e7e7e7;
+.bord {
+  background-color: #6d603d;
   width: 800px;
   height: 800px;
   display: grid;
   grid-template-columns: auto auto auto auto auto auto auto auto;
 }
-:host .cel {
+.bord .scores-list {
+  list-style: none;
+  align-self: center;
+  justify-self: center;
+}
+.bord .scores-list li {
+  color: white;
+  font-size: 32px;
+}
+.bord .scores-list .winner-score {
+  font-weight: bold;
+}
+
+.cel {
   border: solid black 2px;
   display: inline-grid;
   padding: 6%;
 }
-:host .fiche {
+
+.fiche {
   border-radius: 50%;
   width: 100%;
   height: 100%;
 }
+
 @keyframes fadeIn {
   0% {
     opacity: 0;
@@ -23,7 +38,7 @@
     opacity: 0.4;
   }
 }
-:host .zwart {
+.zwart {
   background-color: #5c5c5c;
   opacity: 0;
   transition: opacity 0.5s ease;
@@ -32,7 +47,8 @@
   background-blend-mode: multiply;
   box-shadow: 4px -1px 13px -2px rgba(0, 0, 0, 0.56);
 }
-:host .wit {
+
+.wit {
   background-color: #dedede;
   opacity: 0;
   transition: opacity 0.5s ease;
@@ -40,4 +56,9 @@
   background-blend-mode: multiply;
   box-shadow: 4px -1px 13px -2px rgba(0, 0, 0, 0.56);
   animation: fadeIn 0.5s linear forwards;
+}
+
+.cel:hover {
+  cursor: pointer;
+  border-color: green;
 }
