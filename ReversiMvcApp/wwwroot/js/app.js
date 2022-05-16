@@ -113,7 +113,7 @@ var Game = function (url) {
   var stateMap = {
     gameState: 0,
     token: null,
-    bord: null
+    spel: null
   }; // Private function init
 
   var privateInit = function privateInit() {
@@ -127,8 +127,9 @@ var Game = function (url) {
     stateMap.token = token;
     setInterval(_getCurrentGameState, 2000);
 
-    _getCurrentGameBordState().then(function () {
-      Game.Reversi.drawBord(token, stateMap.bord);
+    _getCurrentGame().then(function () {
+      Game.Reversi.drawBord(token, stateMap.spel.Bord);
+      Game.Reversi.checkAfgelopen(token, stateMap.spel);
     });
 
     Game.Data.connection.start()["catch"](function (err) {
@@ -143,11 +144,11 @@ var Game = function (url) {
     });
   };
 
-  var _getCurrentGameBordState = function _getCurrentGameBordState() {
+  var _getCurrentGame = function _getCurrentGame() {
     return new Promise(function (resolve, reject) {
-      Game.Model.getGameBord(stateMap.token).then(function (bord) {
-        console.log("New Game State:", bord);
-        resolve(stateMap.bord = bord);
+      Game.Model.getGame(stateMap.token).then(function (game) {
+        console.log("Game:", game);
+        resolve(stateMap.spel = game);
       });
     });
   }; // Waarde/object geretourneerd aan de outer scope
@@ -156,7 +157,7 @@ var Game = function (url) {
   return {
     init: privateInit,
     getCurrentGameState: _getCurrentGameState,
-    getCurrentGameBordState: _getCurrentGameBordState
+    getCurrentGame: _getCurrentGame
   };
 }("https://localhost:5001");
 
@@ -245,18 +246,18 @@ Game.Reversi = function () {
     } finally {
       _iterator2.f();
     }
-
-    _checkAfgelopen(token);
   };
 
   var _doeZet = function _doeZet(x, y, token) {
     try {
       Game.Data.connection.invoke("Zet", parseInt(x), parseInt(y), token);
-      Game.Data.connection.on("ZetDone", function (gameState, status, bord) {
-        console.log("New Bord:", JSON.parse(bord), status);
+      Game.Data.connection.on("ZetDone", function (gameState, status, spel) {
+        console.log("New Bord:", JSON.parse(spel).Bord, status);
 
         if (status === "SUCCEEDED") {
-          _drawBord(token, JSON.parse(bord));
+          _drawBord(token, JSON.parse(spel).Bord);
+
+          _checkAfgelopen(token);
         }
       });
     } catch (e) {
@@ -265,18 +266,18 @@ Game.Reversi = function () {
   };
 
   var _checkAfgelopen = function _checkAfgelopen(token) {
-    Game.Model.getAfgelopen(token).then(function (bord) {
-      if (bord === "Niet afgelopen") {
+    Game.Model.getAfgelopen(token).then(function (spel) {
+      if (spel === "Niet afgelopen") {
         return;
       }
 
-      console.log("Spel is afgelopen:", bord);
+      console.log("Spel is afgelopen:", spel);
       var bordElement = $(".bord");
       bordElement.empty();
       var witScore = 0;
       var zwartScore = 0;
 
-      var _iterator4 = _createForOfIteratorHelper(bord),
+      var _iterator4 = _createForOfIteratorHelper(spel.Bord),
           _step4;
 
       try {
@@ -346,6 +347,13 @@ Game.Reversi = function () {
       }
 
       scoresElement.append(winnerScoreElement);
+      var buttonWrapper = document.createElement("li");
+      var exitButton = document.createElement("button");
+      exitButton.textContent = "Exit Game";
+      exitButton.className = "exit-button";
+      buttonWrapper.append(exitButton);
+      scoresElement.append(buttonWrapper);
+      Game.Model.updateScores(spel);
     });
   }; // Waarde/object geretourneerd aan de outer scope
 
@@ -353,7 +361,8 @@ Game.Reversi = function () {
   return {
     init: privateInit,
     doeZet: _doeZet,
-    drawBord: _drawBord
+    drawBord: _drawBord,
+    checkAfgelopen: _checkAfgelopen
   };
 }();
 
@@ -477,24 +486,22 @@ Game.Model = function (url) {
   var _getAfgelopen = function _getAfgelopen(token) {
     return new Promise(function (resolve, reject) {
       Game.Data.get("".concat(configMap.apiUrl, "/api/Spel/afgelopen/").concat(token)).then(function (r) {
-        resolve(r.Bord);
+        resolve(r);
       });
     });
   };
 
-  var _getGameBord = function _getGameBord(token) {
+  var _getGame = function _getGame(token) {
     return new Promise(function (resolve, reject) {
       Game.Data.get("".concat(configMap.apiUrl, "/api/Spel/").concat(token)).then(function (r) {
-        resolve(r.Bord);
+        resolve(r);
       });
     });
   };
 
-  var _updatePlayerWins = function _updatePlayerWins(winStatusType, token) {
+  var _updateScores = function _updateScores(spel) {
     return new Promise(function (resolve, reject) {
-      Game.Data.patch("/Speler/score", {
-        winStatusType: winStatusType
-      }, token).then(function (r) {
+      Game.Data.put("/Speler/Scores", spel).then(function (r) {
         resolve(r);
       });
     });
@@ -504,9 +511,9 @@ Game.Model = function (url) {
   return {
     init: privateInit,
     getGameState: _getGameState,
-    getGameBord: _getGameBord,
+    getGame: _getGame,
     getAfgelopen: _getAfgelopen,
-    updatePlayerWins: _updatePlayerWins
+    updateScores: _updateScores
   };
 }("https://localhost:5001");
 

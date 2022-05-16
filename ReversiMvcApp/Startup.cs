@@ -36,6 +36,7 @@ namespace ReversiMvcApp
             services.AddControllersWithViews();
             services.AddRazorPages();
             services.AddHttpClient();
+            services.AddControllers().AddNewtonsoftJson();
 
             services.AddCors(options =>
             {

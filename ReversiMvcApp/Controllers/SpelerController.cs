@@ -150,36 +150,42 @@ namespace ReversiMvcApp.Controllers
             return _context.Speler.Any(e => e.Guid == id);
         }
         
-        // POST: Speler/Score/{id}
-        [HttpPatch("score/{id}")]
-        public async Task<IActionResult> UpdateSpelerScore(string id, [FromBody] string winStatusType)
+        // PUT: Speler/Scores
+        [HttpPut]
+        public async Task<IActionResult> Scores([FromBody] Spel spel)
         {
-            if (id == null)
-            {
-                return NotFound();
-            }
-
-            var speler = await _context.Speler
-                .FirstOrDefaultAsync(m => m.Guid == id);
+            var spelerZwart = await _context.Speler.FindAsync(spel.Speler1token);
+            var spelerWit = await _context.Speler.FindAsync(spel.Speler2token);
             
-            if (speler == null)
-            {
-                return NotFound();
-            }
+            var zwartScore = 0;
+            var witScore = 0;
 
-            switch (winStatusType)
+            foreach (var kleur in spel.Bord)
             {
-                case "GEWONNEN":
-                    speler.AantalGewonnen += 1;
-                    break;
-                case "VERLOREN":
-                    speler.AantalVerloren += 1;
-                    break;
-                case "GELIJK":
-                    speler.AantalGelijk += 1;
-                    break;
+                if (kleur == Kleur.Wit)
+                {
+                    witScore++;
+                } else if (kleur == Kleur.Zwart)
+                {
+                    zwartScore++;
+                }
             }
             
+            if (witScore > zwartScore)
+            {
+                spelerWit.AantalGewonnen++;
+                spelerZwart.AantalVerloren++;
+            } else if (witScore == zwartScore)
+            {
+                spelerWit.AantalGelijk++;
+                spelerZwart.AantalGelijk++;
+            } else if (zwartScore > witScore)
+            {
+                spelerZwart.AantalGewonnen++;
+                spelerWit.AantalVerloren++;
+            }
+            
+            await _context.SaveChangesAsync();
             return Ok();
         }
     }
