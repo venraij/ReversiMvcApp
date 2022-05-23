@@ -6,6 +6,8 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="GoogleReCaptcha.V3" Version="1.3.1" />
+    <PackageReference Include="Microsoft.AspNet.WebHelpers" Version="3.2.8" />
     <PackageReference Include="Microsoft.AspNetCore.Diagnostics.EntityFrameworkCore" Version="3.1.13" />
     <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="3.1.14" />
     <PackageReference Include="Microsoft.AspNetCore.Identity.UI" Version="3.1.14" />
@@ -18,6 +20,14 @@
 
   <ItemGroup>
     <_ContentIncludedByDefault Remove="wwwroot\js\old\app.js" />
+    <_ContentIncludedByDefault Remove="wwwroot\lib\recaptcha\Recaptcha.dll" />
+    <_ContentIncludedByDefault Remove="wwwroot\lib\recaptcha\Recaptcha.pdb" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="Recaptcha">
+      <HintPath>wwwroot\lib\recaptcha\Recaptcha.dll</HintPath>
+    </Reference>
   </ItemGroup>
 
 </Project>

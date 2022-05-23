@@ -5,6 +5,8 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using System;
+using GoogleReCaptcha.V3;
+using GoogleReCaptcha.V3.Interface;
 using Microsoft.EntityFrameworkCore;
 using ReversiMvcApp.Data;
 
@@ -80,6 +82,8 @@ namespace ReversiMvcApp
                             .AllowCredentials();
                     });
             });
+            
+            services.AddHttpClient<ICaptchaValidator, GoogleReCaptchaValidator>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
