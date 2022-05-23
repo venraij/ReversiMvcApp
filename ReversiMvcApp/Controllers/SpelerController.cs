@@ -12,9 +12,9 @@ namespace ReversiMvcApp.Controllers
 {
     public class SpelerController : Controller
     {
-        private readonly ReversiDbContext _context;
+        private readonly ApplicationDbContext _context;
 
-        public SpelerController(ReversiDbContext context)
+        public SpelerController(ApplicationDbContext context)
         {
             _context = context;
         }

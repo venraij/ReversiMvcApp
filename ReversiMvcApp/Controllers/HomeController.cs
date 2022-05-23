@@ -7,16 +7,18 @@ using ReversiMvcApp.Models;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Net.Http;
 using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Identity;
 
 namespace ReversiMvcApp.Controllers
 {
     public class HomeController : Controller
     {
-        private ReversiDbContext db = new ReversiDbContext();
+        private ApplicationDbContext db = new ApplicationDbContext();
         private readonly ILogger<HomeController> _logger;
         private bool alreadyConnected;
         private string baseApiUrl = "https://localhost:5001/api/";
@@ -34,15 +36,23 @@ namespace ReversiMvcApp.Controllers
             ClaimsPrincipal currentUser = User;
             var currentUserID = currentUser.FindFirst(ClaimTypes.NameIdentifier).Value;
             Speler speler = db.Speler.Find(currentUserID);
-
+            int amountSpelers = db.Speler.Count();
+            
             if (speler == null)
             {
                 speler = new Speler();
                 speler.Guid = currentUserID;
+                speler.Naam = currentUser.Identity.Name;
+                speler.rol = Rol.Speler;
+
+                if (amountSpelers == 0)
+                {
+                }
+
                 db.Speler.Add(speler);
                 db.SaveChanges();
             }
-
+            
             using (HttpClient client = new HttpClient())
             {
                 client.BaseAddress = new Uri(apiUrl);
@@ -71,10 +81,8 @@ namespace ReversiMvcApp.Controllers
 
                     return View(spelListNo2nd);
                 }
-                else
-                {
-                    return View(new List<Spel>());
-                }
+
+                return View(new List<Spel>());
             }
         }
 
@@ -85,19 +93,55 @@ namespace ReversiMvcApp.Controllers
         }
 
         [Authorize]
-        public IActionResult Details(Spel spel)
+        public async Task<IActionResult> Details([FromQuery] Spel spel, [FromQuery] string Guid)
         {
             var currentUser = User;
             var currentUserID = currentUser.FindFirst(ClaimTypes.NameIdentifier).Value;
+            Speler speler = db.Speler.Find(currentUserID);
+
+            if (Guid != null)
+            {
+                ViewData["Connected"] = true;
+                return View(spel);
+            }
+
+            if (spel.Speler1token == null)
+            {
+                return RedirectToAction("Index", "Home");
+            }
 
             if (spel.Speler1token == currentUserID || spel.Speler2token == currentUserID)
             {
                 ViewData["Connected"] = true;
-            } else
+                return View(spel);
+            } 
+            
+            if (spel.Speler2token == null && spel.Speler1token != currentUserID)
             {
-                ViewData["Connected"] = false;
+                spel.Speler2token = currentUserID;
+                string apiUrl = baseApiUrl + "spel/meespelen";
+
+                using (HttpClient client = new HttpClient())
+                {
+                    client.BaseAddress = new Uri(apiUrl);
+                    client.DefaultRequestHeaders.Accept.Clear();
+                    client.DefaultRequestHeaders.Accept.Add(
+                        new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/json"));
+                    
+                    var content = new StringContent(JsonConvert.SerializeObject(spel), Encoding.UTF8, "application/json");
+                    
+                    HttpResponseMessage response = await client.PatchAsync(apiUrl, content);
+                    
+                    if (response.IsSuccessStatusCode)
+                    {
+                        ViewData["Connected"] = true;
+                        return RedirectToAction("Details", "Home", speler);
+                    }
+                }
             }
-            return View(spel);
+            
+            ViewData["Connected"] = false;
+            return RedirectToAction("Index", "Home");
         }
 
         [Authorize]

@@ -148,7 +148,13 @@ var Game = function (url) {
     return new Promise(function (resolve, reject) {
       Game.Model.getGame(stateMap.token).then(function (game) {
         console.log("Game:", game);
-        resolve(stateMap.spel = game);
+
+        if (game.token === null) {
+          reject("Geen game gevonden");
+          window.location = "/";
+        } else {
+          resolve(stateMap.spel = game);
+        }
       });
     });
   }; // Waarde/object geretourneerd aan de outer scope
@@ -351,6 +357,11 @@ Game.Reversi = function () {
       var exitButton = document.createElement("button");
       exitButton.textContent = "Exit Game";
       exitButton.className = "exit-button";
+
+      exitButton.onclick = function () {
+        window.location = "/";
+      };
+
       buttonWrapper.append(exitButton);
       scoresElement.append(buttonWrapper);
       Game.Model.updateScores(spel);

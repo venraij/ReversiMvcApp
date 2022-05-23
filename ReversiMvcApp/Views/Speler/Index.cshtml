@@ -24,6 +24,9 @@
             <th>
                 @Html.DisplayNameFor(model => model.AantalGelijk)
             </th>
+            <th>
+                @Html.DisplayNameFor(model => model.rol)
+            </th>
             <th></th>
         </tr>
     </thead>
@@ -43,10 +46,16 @@
                 @Html.DisplayFor(modelItem => item.AantalGelijk)
             </td>
             <td>
-                <a asp-action="Edit" asp-route-id="@item.Guid">Edit</a> |
-                <a asp-action="Details" asp-route-id="@item.Guid">Details</a> |
-                <a asp-action="Delete" asp-route-id="@item.Guid">Delete</a>
+                @Html.DisplayFor(modelItem => item.rol)
             </td>
+                @* @if (item.rol == Rol.Beheerder) *@
+                @* { *@
+                @*     <td> *@
+                @*         <a asp-action="Edit" asp-route-id="@item.Guid">Edit</a> | *@
+                @*         <a asp-action="Details" asp-route-id="@item.Guid">Details</a> | *@
+                @*         <a asp-action="Delete" asp-route-id="@item.Guid">Delete</a> *@
+                @*     </td> *@
+                @* } *@
         </tr>
 }
     </tbody>
