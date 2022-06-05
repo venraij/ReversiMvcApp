@@ -164,7 +164,7 @@ namespace ReversiMvcApp.Controllers
             }
 
             await _userManager.AddToRoleAsync(user, ((Models.Rol)Rol).ToString());
-            speler.rol = (Models.Rol)Rol;
+            speler.Rol = (Models.Rol)Rol;
             await _context.SaveChangesAsync();
 
             return RedirectToAction("Index");

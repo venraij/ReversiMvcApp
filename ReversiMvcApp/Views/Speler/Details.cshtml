@@ -13,7 +13,7 @@
         <form asp-action="Details">
             <div asp-validation-summary="ModelOnly" class="text-danger"></div>
             <input type="hidden" asp-for="Guid" />
-            <select asp-for="rol" asp-items="Html.GetEnumSelectList<Rol>()" class="form-control"></select>
+            <select asp-for="Rol" asp-items="Html.GetEnumSelectList<Rol>()" class="form-control"></select>
             <div class="form-group">
                 <input type="submit" value="Save" class="btn btn-primary" />
             </div>

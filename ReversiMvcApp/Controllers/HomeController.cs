@@ -43,7 +43,7 @@ namespace ReversiMvcApp.Controllers
                 speler = new Speler();
                 speler.Guid = currentUserID;
                 speler.Naam = currentUser.Identity.Name;
-                speler.rol = Rol.Speler;
+                speler.Rol = Rol.Speler;
 
                 if (amountSpelers == 0)
                 {
