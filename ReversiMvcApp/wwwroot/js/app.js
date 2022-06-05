@@ -120,11 +120,11 @@ var Game = function (url) {
     var queryString = window.location.search;
     var urlParams = new URLSearchParams(queryString);
     var token = urlParams.get("Guid");
-    Game.Model.init();
-    Game.Data.init("production");
-    Game.Reversi.init();
     console.log('Speler Token:', token);
     stateMap.token = token;
+    Game.Model.init();
+    Game.Data.init("production");
+    Game.Reversi.init(token);
     setInterval(_getCurrentGameState, 2000);
 
     _getCurrentGame().then(function () {
@@ -169,12 +169,18 @@ var Game = function (url) {
 
 Game.Reversi = function () {
   // Private function init
-  var privateInit = function privateInit() {};
+  var privateInit = function privateInit(token) {
+    stateMap.token = token;
+  };
+
+  var stateMap = {
+    token: null,
+    cels: []
+  };
 
   var _drawBord = function _drawBord(token, bord) {
     var x = 0;
     var y = 0;
-    var htmlBord = $(".bord");
 
     var _iterator2 = _createForOfIteratorHelper(bord),
         _step2;
@@ -187,46 +193,46 @@ Game.Reversi = function () {
             _step3;
 
         try {
-          var _loop = function _loop() {
+          for (_iterator3.s(); !(_step3 = _iterator3.n()).done;) {
             var cel = _step3.value;
+            var newCel = void 0;
 
-            if (htmlBord.children().length !== bord.length * row.length) {
-              var newCel = document.createElement("div");
-              newCel.className = "cel y".concat(y, " x").concat(x);
-
-              newCel.onclick = function () {
-                Game.Reversi.doeZet(newCel.classList[2][1], newCel.classList[1][1], token);
+            if (stateMap.cels.length !== bord.length * row.length) {
+              newCel = {
+                yValue: y,
+                xValue: x,
+                fiche: null
               };
-
-              htmlBord.append(newCel);
+              stateMap.cels.push(newCel);
             }
 
-            var htmlCel = $(".cel.y".concat(y, ".x").concat(x));
-            var newFiche = document.createElement("div");
-            newFiche.className = "fiche";
+            var newFiche = void 0;
 
             if (cel === 1) {
-              newFiche.classList.add("wit");
+              newFiche = {
+                kleur: "wit"
+              };
             } else if (cel === 2) {
-              newFiche.classList.add("zwart");
+              newFiche = {
+                kleur: "zwart"
+              };
             }
 
-            if (htmlCel.children('div').length > 0) {
-              console.log("Replacing fiche at:", "y".concat(y, " x").concat(x));
-              console.log("Old fiche:", htmlCel.children('div')[0]);
+            var existingCel = stateMap.cels.find(function (cel) {
+              return cel.yValue === y && cel.xValue === x;
+            });
+            var fiche = existingCel ? existingCel.fiche : null;
 
-              if (cel === 1 && htmlCel.children('div')[0].classList.contains("zwart") || cel === 2 && htmlCel.children('div')[0].classList.contains("wit")) {
-                htmlCel.children('div')[0].style.opacity = "0.4";
-                htmlCel.children('div')[0].style.opacity = "0.0";
-                setTimeout(function () {
-                  htmlCel.empty();
-                  console.log(htmlCel);
-                  htmlCel.append(newFiche);
-                }, 500);
+            if (fiche) {
+              console.log("Replacing fiche at:", "y".concat(y, " x").concat(x));
+              console.log("Old fiche:", cel.fiche);
+
+              if (cel === 1 && fiche.kleur === "zwart" || cel === 2 && fiche.kleur === "wit") {
+                existingCel.fiche = newFiche;
               }
             } else if (cel !== 0) {
               console.log("Placing fiche at:", "y".concat(y, " x").concat(x));
-              htmlCel.append(newFiche);
+              existingCel.fiche = newFiche;
             }
 
             x++;
@@ -234,10 +240,6 @@ Game.Reversi = function () {
             if (x === 8) {
               x = 0;
             }
-          };
-
-          for (_iterator3.s(); !(_step3 = _iterator3.n()).done;) {
-            _loop();
           }
         } catch (err) {
           _iterator3.e(err);
@@ -252,18 +254,24 @@ Game.Reversi = function () {
     } finally {
       _iterator2.f();
     }
+
+    var area = $(".play-area");
+    area.empty();
+    area.append(Game.Template.parseTemplate("bord", {
+      cells: stateMap.cels
+    }));
   };
 
-  var _doeZet = function _doeZet(x, y, token) {
+  var _doeZet = function _doeZet(x, y) {
     try {
-      Game.Data.connection.invoke("Zet", parseInt(x), parseInt(y), token);
+      Game.Data.connection.invoke("Zet", parseInt(x), parseInt(y), stateMap.token);
       Game.Data.connection.on("ZetDone", function (gameState, status, spel) {
         console.log("New Bord:", JSON.parse(spel).Bord, status);
 
         if (status === "SUCCEEDED") {
-          _drawBord(token, JSON.parse(spel).Bord);
+          _drawBord(stateMap.token, JSON.parse(spel).Bord);
 
-          _checkAfgelopen(token);
+          _checkAfgelopen(stateMap.token);
         }
       });
     } catch (e) {
@@ -527,5 +535,26 @@ Game.Model = function (url) {
     updateScores: _updateScores
   };
 }("https://localhost:5001");
+
+Game.Template = function () {
+  // Private function init
+  var privateInit = function privateInit() {};
+
+  var _getTemplate = function _getTemplate(templateName) {
+    return spa_templates.templates.game["".concat(templateName)];
+  };
+
+  var _parseTemplate = function _parseTemplate(templateName, data) {
+    console.log(spa_templates.templates.game["".concat(templateName)]);
+    return spa_templates.templates.game["".concat(templateName)](data);
+  }; // Waarde/object geretourneerd aan de outer scope
+
+
+  return {
+    init: privateInit,
+    getTemplate: _getTemplate,
+    parseTemplate: _parseTemplate
+  };
+}();
 
 Game.init();

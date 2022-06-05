@@ -7,6 +7,7 @@ using Microsoft.Extensions.Hosting;
 using System;
 using GoogleReCaptcha.V3;
 using GoogleReCaptcha.V3.Interface;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.EntityFrameworkCore;
 using ReversiMvcApp.Data;
 
@@ -28,12 +29,13 @@ namespace ReversiMvcApp
                 options.UseSqlServer(
                     Configuration.GetConnectionString("DefaultConnection")));
             services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.RequireConfirmedAccount = true)
+                .AddRoles<IdentityRole>()
                 .AddEntityFrameworkStores<ApplicationDbContext>();
             services.AddControllersWithViews();
             services.AddRazorPages();
             services.AddHttpClient();
             services.AddControllers().AddNewtonsoftJson();
-            
+
             services.Configure<IdentityOptions>(options =>
             {
                 // Password settings.

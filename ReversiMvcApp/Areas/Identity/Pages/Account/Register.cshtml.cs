@@ -25,18 +25,23 @@ namespace ReversiMvcApp.Areas.Identity.Pages.Account
         private readonly ILogger<RegisterModel> _logger;
         private readonly IEmailSender _emailSender;
         private readonly ICaptchaValidator _captchaValidator;
+        private readonly RoleManager<IdentityRole> _roleManager;
+
         public RegisterModel(
             UserManager<IdentityUser> userManager,
             SignInManager<IdentityUser> signInManager,
             ILogger<RegisterModel> logger,
+            RoleManager<IdentityRole> roleManager,
             IEmailSender emailSender,
-            ICaptchaValidator captchaValidator)
+            ICaptchaValidator captchaValidator
+            )
         {
             _userManager = userManager;
             _signInManager = signInManager;
             _logger = logger;
             _emailSender = emailSender;
             _captchaValidator = captchaValidator;
+            _roleManager = roleManager;
         }
 
         [BindProperty]
@@ -104,6 +109,33 @@ namespace ReversiMvcApp.Areas.Identity.Pages.Account
                     await _emailSender.SendEmailAsync(Input.Email, "Confirm your email",
                         $"Please confirm your account by <a href='{HtmlEncoder.Default.Encode(callbackUrl)}'>clicking here</a>.");
 
+                    bool spelerRoleExist = await _roleManager.RoleExistsAsync("speler");
+                    bool mediatorRoleExist = await _roleManager.RoleExistsAsync("mediator");
+                    bool beheerderRoleExist = await _roleManager.RoleExistsAsync("beheerder");
+
+                    if (!spelerRoleExist || !mediatorRoleExist || !beheerderRoleExist)
+                    {
+                        var role = new IdentityRole();
+                        role.Name = "Speler";
+                        await _roleManager.CreateAsync(role);
+                    }
+
+                    if (!mediatorRoleExist)
+                    {
+                        var role = new IdentityRole();
+                        role.Name = "Mediator";
+                        await _roleManager.CreateAsync(role);
+                    }
+
+                    if (!beheerderRoleExist)
+                    {
+                        var role = new IdentityRole();
+                        role.Name = "Beheerder";
+                        await _roleManager.CreateAsync(role);                        
+                    }
+
+                    await _userManager.AddToRoleAsync(user, "Speler");
+                    
                     if (_userManager.Options.SignIn.RequireConfirmedAccount)
                     {
                         return RedirectToPage("RegisterConfirmation", new { email = Input.Email, returnUrl = returnUrl });

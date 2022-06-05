@@ -1,10 +1,15 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Http;
+using System.Text;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
+using Newtonsoft.Json;
 using ReversiMvcApp.Data;
 using ReversiMvcApp.Models;
 
@@ -13,10 +18,18 @@ namespace ReversiMvcApp.Controllers
     public class SpelerController : Controller
     {
         private readonly ApplicationDbContext _context;
+        private readonly RoleManager<IdentityRole> _roleManager;
+        private readonly UserManager<IdentityUser> _userManager;
+        private readonly string baseApiUrl = "https://localhost:5001/api/";
 
-        public SpelerController(ApplicationDbContext context)
+        public SpelerController(
+            ApplicationDbContext context,
+            RoleManager<IdentityRole> roleManager,
+            UserManager<IdentityUser> userManager)
         {
             _context = context;
+            _roleManager = roleManager;
+            _userManager = userManager;
         }
 
         // GET: Speler
@@ -26,6 +39,7 @@ namespace ReversiMvcApp.Controllers
         }
 
         // GET: Speler/Details/5
+        [Authorize(Roles = "Beheerder")]
         public async Task<IActionResult> Details(string id)
         {
             if (id == null)
@@ -80,6 +94,23 @@ namespace ReversiMvcApp.Controllers
             }
             return View(speler);
         }
+        
+        // GET: Speler/Manage/5
+        public async Task<IActionResult> Manage(string id)
+        {
+            if (id == null)
+            {
+                return NotFound();
+            }
+
+            var speler = await _context.Speler.FindAsync(id);
+            if (speler == null)
+            {
+                return NotFound();
+            }
+            return View(speler);
+        }
+
 
         // POST: Speler/Edit/5
         // To protect from overposting attacks, enable the specific properties you want to bind to, for 
@@ -115,6 +146,29 @@ namespace ReversiMvcApp.Controllers
             }
             return View(speler);
         }
+        
+        // POST: Speler/Details/5
+        // To protect from overposting attacks, enable the specific properties you want to bind to, for 
+        // more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Beheerder")]
+        public async Task<IActionResult> Details([FromForm] string Guid, [FromForm] int Rol)
+        {
+            var user = await _userManager.FindByIdAsync(Guid);
+            var speler = await _context.Speler.FindAsync(Guid);
+            
+            if (await _userManager.IsInRoleAsync(user, ((Models.Rol)Rol).ToString()))
+            {
+                return View(speler);
+            }
+
+            await _userManager.AddToRoleAsync(user, ((Models.Rol)Rol).ToString());
+            speler.rol = (Models.Rol)Rol;
+            await _context.SaveChangesAsync();
+
+            return RedirectToAction("Index");
+        }
 
         // GET: Speler/Delete/5
         public async Task<IActionResult> Delete(string id)
@@ -137,12 +191,36 @@ namespace ReversiMvcApp.Controllers
         // POST: Speler/Delete/5
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeleteConfirmed(string id)
+        [Authorize(Roles = "Beheerder,Mediator")]
+        public async Task<IActionResult> DeleteConfirmed([FromForm] string Guid)
         {
-            var speler = await _context.Speler.FindAsync(id);
-            _context.Speler.Remove(speler);
-            await _context.SaveChangesAsync();
-            return RedirectToAction(nameof(Index));
+            var speler = await _context.Speler.FindAsync(Guid);
+
+            if (speler == null)
+            {
+                return RedirectToAction(nameof(Index));
+            }
+            
+            string apiUrl = baseApiUrl + "spel/Speler?spelerToken=" + Guid;
+
+            using (HttpClient client = new HttpClient())
+            {
+                client.BaseAddress = new Uri(apiUrl);
+                client.DefaultRequestHeaders.Accept.Clear();
+                client.DefaultRequestHeaders.Accept.Add(
+                    new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/json"));
+                
+                HttpResponseMessage response = await client.DeleteAsync(apiUrl);
+                    
+                if (response.IsSuccessStatusCode)
+                {
+                    _context.Speler.Remove(speler);
+                    await _context.SaveChangesAsync();
+                    return RedirectToAction(nameof(Index));                
+                }
+            }
+
+            return View(speler);
         }
 
         private bool SpelerExists(string id)

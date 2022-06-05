@@ -12,6 +12,7 @@ using System.Net.Http;
 using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Identity;
 
 namespace ReversiMvcApp.Controllers
@@ -20,8 +21,7 @@ namespace ReversiMvcApp.Controllers
     {
         private ApplicationDbContext db = new ApplicationDbContext();
         private readonly ILogger<HomeController> _logger;
-        private bool alreadyConnected;
-        private string baseApiUrl = "https://localhost:5001/api/";
+        private readonly string baseApiUrl = "https://localhost:5001/api/";
 
         public HomeController(ILogger<HomeController> logger)
         {

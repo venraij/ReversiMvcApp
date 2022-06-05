@@ -13,6 +13,12 @@
   font-weight: 700;
 }
 
+.cel {
+  border: solid #000 2px;
+  display: inline-grid;
+  padding: 6%;
+}
+
 .fiche {
   border-radius: 50%;
   width: 100%;

@@ -6,9 +6,6 @@
 
 <h1>Index</h1>
 
-<p>
-    <a asp-action="Create">Create New</a>
-</p>
 <table class="table">
     <thead>
         <tr>
@@ -27,6 +24,7 @@
             <th>
                 @Html.DisplayNameFor(model => model.rol)
             </th>
+            <th></th>
             <th></th>
         </tr>
     </thead>
@@ -48,14 +46,22 @@
             <td>
                 @Html.DisplayFor(modelItem => item.rol)
             </td>
-                @* @if (item.rol == Rol.Beheerder) *@
-                @* { *@
-                @*     <td> *@
-                @*         <a asp-action="Edit" asp-route-id="@item.Guid">Edit</a> | *@
-                @*         <a asp-action="Details" asp-route-id="@item.Guid">Details</a> | *@
-                @*         <a asp-action="Delete" asp-route-id="@item.Guid">Delete</a> *@
-                @*     </td> *@
-                @* } *@
+            <td>
+                @if (User.IsInRole("Beheerder"))
+                {
+                        <a asp-action="Details" asp-route-id="@item.Guid">Rol aanpassen</a>
+                }
+                |
+                @if (User.IsInRole("Beheerder") || User.IsInRole("Mediator"))
+                {
+                        <a asp-action="Manage" asp-route-id="@item.Guid">Beheren</a>
+                }
+                |
+                @if (User.IsInRole("Beheerder"))
+                {
+                        <a asp-action="Edit" asp-route-id="@item.Guid">Bewerken</a>
+                }
+            </td>
         </tr>
 }
     </tbody>

@@ -1,45 +1,23 @@
 @model ReversiMvcApp.Models.Speler
 
 @{
-    ViewData["Title"] = "Details";
+    ViewData["Title"] = "Rol aanpassen";
 }
 
-<h1>Details</h1>
+<h1>Rol aanpassen</h1>
 
 <div>
     <h4>Speler</h4>
     <hr />
     <dl class="row">
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Naam)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Naam)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.AantalGewonnen)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.AantalGewonnen)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.AantalVerloren)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.AantalVerloren)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.AantalGelijk)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.AantalGelijk)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.rol)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.rol)
-        </dd>
+        <form asp-action="Details">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <input type="hidden" asp-for="Guid" />
+            <select asp-for="rol" asp-items="Html.GetEnumSelectList<Rol>()" class="form-control"></select>
+            <div class="form-group">
+                <input type="submit" value="Save" class="btn btn-primary" />
+            </div>
+        </form>
     </dl>
 </div>
 <div>
