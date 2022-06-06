@@ -124,6 +124,8 @@ var Game = function (url) {
     stateMap.token = token;
     Game.Model.init();
     Game.Data.init("production");
+    Game.Template.init();
+    Game.API.init();
     Game.Reversi.init(token);
     setInterval(_getCurrentGameState, 2000);
 
@@ -256,6 +258,9 @@ Game.Reversi = function () {
     }
 
     var area = $(".play-area");
+
+    _displayFact();
+
     area.empty();
     area.append(Game.Template.parseTemplate("bord", {
       cells: stateMap.cels
@@ -373,6 +378,15 @@ Game.Reversi = function () {
       buttonWrapper.append(exitButton);
       scoresElement.append(buttonWrapper);
       Game.Model.updateScores(spel);
+    });
+  };
+
+  var _displayFact = function _displayFact() {
+    Game.API.getFact().then(function (factObject) {
+      console.log(factObject);
+      var html = Game.Template.parseTemplate("fact", factObject.data);
+      var area = $(".play-area");
+      area.prepend(html);
     });
   }; // Waarde/object geretourneerd aan de outer scope
 
@@ -556,5 +570,34 @@ Game.Template = function () {
     parseTemplate: _parseTemplate
   };
 }();
+
+Game.API = function () {
+  var privateInit = function privateInit() {};
+
+  var _getFact = function _getFact() {
+    return new Promise(function (resolve, reject) {
+      Game.Data.get("https://asli-fun-fact-api.herokuapp.com/").then(function (r) {
+        resolve(r);
+      });
+    });
+  };
+
+  return {
+    init: privateInit,
+    getFact: _getFact
+  };
+}();
+
+Game.Stats = function () {
+  var configMap = {
+    apiUrl: url
+  };
+
+  var privateInit = function privateInit() {};
+
+  return {
+    init: privateInit
+  };
+};
 
 Game.init();
