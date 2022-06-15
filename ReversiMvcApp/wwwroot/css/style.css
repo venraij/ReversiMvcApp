@@ -4,6 +4,7 @@
   height: 800px;
   display: grid;
   grid-template-columns: auto auto auto auto auto auto auto auto;
+  margin-bottom: 50px;
   align-self: center;
   justify-self: center;
   font-size: 32px;
@@ -11,6 +12,11 @@
 
 .winner-score {
   font-weight: 700;
+}
+
+.chart {
+  max-height: 300px !important;
+  max-width: 300px !important;
 }
 
 .cel {

@@ -126,6 +126,7 @@ var Game = function (url) {
     Game.Data.init("production");
     Game.Template.init();
     Game.API.init();
+    Game.Stats.init();
     Game.Reversi.init(token);
     setInterval(_getCurrentGameState, 2000);
 
@@ -183,6 +184,10 @@ Game.Reversi = function () {
   var _drawBord = function _drawBord(token, bord) {
     var x = 0;
     var y = 0;
+    var whiteFiches = 0;
+    var blackFiches = 0;
+    var occupiedCells = 0;
+    var unoccupiedCells = 0;
 
     var _iterator2 = _createForOfIteratorHelper(bord),
         _step2;
@@ -214,10 +219,14 @@ Game.Reversi = function () {
               newFiche = {
                 kleur: "wit"
               };
+              whiteFiches += 1;
             } else if (cel === 2) {
               newFiche = {
                 kleur: "zwart"
               };
+              blackFiches += 1;
+            } else {
+              unoccupiedCells += 1;
             }
 
             var existingCel = stateMap.cels.find(function (cel) {
@@ -235,6 +244,7 @@ Game.Reversi = function () {
             } else if (cel !== 0) {
               console.log("Placing fiche at:", "y".concat(y, " x").concat(x));
               existingCel.fiche = newFiche;
+              occupiedCells += 1;
             }
 
             x++;
@@ -257,6 +267,7 @@ Game.Reversi = function () {
       _iterator2.f();
     }
 
+    Game.Stats.setStatsData(occupiedCells, whiteFiches, unoccupiedCells, blackFiches);
     var area = $(".play-area");
 
     _displayFact();
@@ -265,6 +276,7 @@ Game.Reversi = function () {
     area.append(Game.Template.parseTemplate("bord", {
       cells: stateMap.cels
     }));
+    Game.Stats.renderStats();
   };
 
   var _doeZet = function _doeZet(x, y) {
@@ -589,15 +601,33 @@ Game.API = function () {
 }();
 
 Game.Stats = function () {
-  var configMap = {
-    apiUrl: url
-  };
-
   var privateInit = function privateInit() {};
 
-  return {
-    init: privateInit
+  var configMap = {};
+  var stateMap = {
+    celsOccupied: 0,
+    celsUnoccupied: 0,
+    whiteFiches: 0,
+    blackFiches: 0
   };
-};
+
+  var _setStatsData = function _setStatsData(celsOccupied, whiteFiches, celsUnoccupied, blackFiches) {
+    stateMap.celsOccupied = celsOccupied;
+    stateMap.celsUnoccupied = celsUnoccupied;
+    stateMap.whiteFiches = whiteFiches;
+    stateMap.blackFiches = blackFiches;
+  };
+
+  var _renderStats = function _renderStats() {
+    var area = $(".play-area");
+    area.append(Game.Template.parseTemplate("stats", stateMap));
+  };
+
+  return {
+    init: privateInit,
+    renderStats: _renderStats,
+    setStatsData: _setStatsData
+  };
+}();
 
 Game.init();
