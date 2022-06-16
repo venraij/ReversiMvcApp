@@ -20,6 +20,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Folder Include="wwwroot\" />
     <_ContentIncludedByDefault Remove="wwwroot\js\old\app.js" />
     <_ContentIncludedByDefault Remove="wwwroot\lib\recaptcha\Recaptcha.dll" />
     <_ContentIncludedByDefault Remove="wwwroot\lib\recaptcha\Recaptcha.pdb" />
