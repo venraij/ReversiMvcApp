@@ -8,8 +8,11 @@ using System;
 using GoogleReCaptcha.V3;
 using GoogleReCaptcha.V3.Interface;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.EntityFrameworkCore;
 using ReversiMvcApp.Data;
+using ReversiMvcApp.Entities;
+using ReversiMvcApp.Services;
 
 namespace ReversiMvcApp
 {
@@ -86,6 +89,18 @@ namespace ReversiMvcApp
             });
             
             services.AddHttpClient<ICaptchaValidator, GoogleReCaptchaValidator>();
+            
+            
+            services.AddTransient<IEmailSender, MailKitEmailSender>();
+            services.Configure<MailKitEmailSenderOptions>(options =>
+            {
+                options.Host_Address = Configuration["ExternalProviders:MailKit:SMTP:Address"];
+                options.Host_Port = Convert.ToInt32(Configuration["ExternalProviders:MailKit:SMTP:Port"]);
+                options.Host_Username = Configuration["ExternalProviders:MailKit:SMTP:Account"];
+                options.Host_Password = Configuration["ExternalProviders:MailKit:SMTP:Password"];
+                options.Sender_EMail = Configuration["ExternalProviders:MailKit:SMTP:SenderEmail"];
+                options.Sender_Name = Configuration["ExternalProviders:MailKit:SMTP:SenderName"];
+            });
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
