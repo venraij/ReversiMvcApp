@@ -1,15 +1,12 @@
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
-using System.Text;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
-using Newtonsoft.Json;
+using Microsoft.Extensions.Configuration;
 using ReversiMvcApp.Data;
 using ReversiMvcApp.Models;
 
@@ -18,18 +15,19 @@ namespace ReversiMvcApp.Controllers
     public class SpelerController : Controller
     {
         private readonly ApplicationDbContext _context;
-        private readonly RoleManager<IdentityRole> _roleManager;
         private readonly UserManager<IdentityUser> _userManager;
-        private readonly string baseApiUrl = "https://localhost:5001/api/";
+        private readonly IConfiguration _configuration;
+        private readonly string _baseApiUrl;
 
         public SpelerController(
+            IConfiguration configuration,
             ApplicationDbContext context,
-            RoleManager<IdentityRole> roleManager,
             UserManager<IdentityUser> userManager)
         {
             _context = context;
-            _roleManager = roleManager;
             _userManager = userManager;
+            _configuration = configuration;
+            _baseApiUrl = _configuration["ApiUrl"] + "/";
         }
 
         // GET: Speler
@@ -201,7 +199,7 @@ namespace ReversiMvcApp.Controllers
                 return RedirectToAction(nameof(Index));
             }
             
-            string apiUrl = baseApiUrl + "spel/Speler?spelerToken=" + Guid;
+            string apiUrl = _baseApiUrl + "spel/Speler?spelerToken=" + Guid;
 
             using (HttpClient client = new HttpClient())
             {

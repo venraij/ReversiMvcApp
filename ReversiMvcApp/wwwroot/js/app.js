@@ -105,11 +105,7 @@ var FeedbackWidget = /*#__PURE__*/function () {
   return FeedbackWidget;
 }();
 
-var Game = function (url) {
-  //Configuratie en state waarden
-  var configMap = {
-    apiUrl: url
-  };
+var Game = function () {
   var stateMap = {
     gameState: 0,
     token: null,
@@ -120,13 +116,10 @@ var Game = function (url) {
     var queryString = window.location.search;
     var urlParams = new URLSearchParams(queryString);
     var token = urlParams.get("Guid");
+    var environment = document.currentScript.getAttribute("test");
     console.log('Speler Token:', token);
     stateMap.token = token;
-    Game.Model.init();
-    Game.Data.init("production");
-    Game.Template.init();
-    Game.API.init();
-    Game.Stats.init();
+    Game.Data.init(environment);
     Game.Reversi.init(token);
     setInterval(_getCurrentGameState, 2000);
 
@@ -168,7 +161,7 @@ var Game = function (url) {
     getCurrentGameState: _getCurrentGameState,
     getCurrentGame: _getCurrentGame
   };
-}("https://localhost:5001");
+}();
 
 Game.Reversi = function () {
   // Private function init
@@ -413,7 +406,7 @@ Game.Reversi = function () {
 
 Game.Data = function (url) {
   var stateMap = {
-    environment: 'development'
+    environment: 'Development'
   }; //Configuratie en state waarden
 
   var configMap = {
@@ -424,57 +417,73 @@ Game.Data = function (url) {
       url: "api/Spel"
     }],
     apiUrl: url
-  };
+  }; // Private function init
 
-  var get = function get(url) {
-    if (stateMap.environment === "development") {
-      return getMockData(url);
-    } else if (stateMap.environment === "production") {
-      return fetch(url, {
-        method: "GET"
-      }).then(function (res) {
-        return res.json();
-      })["catch"](function (error) {
-        console.log(error);
-      });
+  var privateInit = function privateInit(environment) {
+    if (environment) {
+      stateMap.environment = environment;
+    }
+
+    if (stateMap.environment !== "Production" && stateMap.environment !== "Development") {
+      throw new Error("Environment not set in state or set incorrectly");
+    }
+
+    if (stateMap.environment === "Production") {
+      configMap.apiUrl = "https://reversi.nickvraaij.dev:5001";
     }
   };
 
-  var put = function put(url, data, spelToken) {
-    if (stateMap.environment === "production") {
-      return fetch(url, {
-        method: "PUT",
-        headers: {
-          'Content-Type': 'application/json',
-          'spelToken': spelToken
-        },
-        body: JSON.stringify(data)
-      }).then(function (res) {
-        return res.json();
-      })["catch"](function (error) {
-        console.log(error);
-      });
-    }
+  var get = function get(path) {
+    return fetch("".concat(configMap.apiUrl, "/").concat(path), {
+      method: "GET"
+    }).then(function (res) {
+      return res.json();
+    })["catch"](function (error) {
+      console.log(error);
+    });
   };
 
-  var patch = function patch(url, data, spelToken) {
-    if (stateMap.environment === "production") {
-      return fetch(url, {
-        method: "PATCH",
-        headers: {
-          'Content-Type': 'application/json',
-          'spelToken': spelToken
-        },
-        body: JSON.stringify(data)
-      }).then(function (res) {
-        return res.json();
-      })["catch"](function (error) {
-        console.log(error);
-      });
-    }
+  var getFromApi = function getFromApi(url) {
+    return fetch(url, {
+      method: "GET"
+    }).then(function (res) {
+      return res.json();
+    })["catch"](function (error) {
+      console.log(error);
+    });
   };
 
-  var connection = new signalR.HubConnectionBuilder().withUrl("https://localhost:5001/gameHub").configureLogging(signalR.LogLevel.Information).build(); //Disable send button until connection is established
+  var put = function put(path, data, spelToken) {
+    return fetch("".concat(configMap.apiUrl, "/").concat(path), {
+      method: "PUT",
+      headers: {
+        'Content-Type': 'application/json',
+        'spelToken': spelToken
+      },
+      body: JSON.stringify(data)
+    }).then(function (res) {
+      return res.json();
+    })["catch"](function (error) {
+      console.log(error);
+    });
+  };
+
+  var patch = function patch(path, data, spelToken) {
+    return fetch("".concat(configMap.apiUrl, "/").concat(path), {
+      method: "PATCH",
+      headers: {
+        'Content-Type': 'application/json',
+        'spelToken': spelToken
+      },
+      body: JSON.stringify(data)
+    }).then(function (res) {
+      return res.json();
+    })["catch"](function (error) {
+      console.log(error);
+    });
+  };
+
+  var connection = new signalR.HubConnectionBuilder().withUrl("".concat(configMap.apiUrl, "/gameHub")).configureLogging(signalR.LogLevel.Information).build(); //Disable send button until connection is established
 
   var getMockData = function getMockData(url) {
     var mockData = configMap.mock.find(function (x) {
@@ -483,16 +492,6 @@ Game.Data = function (url) {
     return new Promise(function (resolve, reject) {
       resolve(mockData);
     });
-  }; // Private function init
-
-
-  var privateInit = function privateInit(environment) {
-    console.log(configMap.apiUrl);
-    stateMap.environment = environment;
-
-    if (stateMap.environment !== "production" && stateMap.environment !== "development") {
-      throw new Error("Environment not set in state or set incorrectly");
-    }
   }; // Waarde/object geretourneerd aan de outer scope
 
 
@@ -501,24 +500,17 @@ Game.Data = function (url) {
     get: get,
     put: put,
     patch: patch,
-    connection: connection
+    connection: connection,
+    getFromApi: getFromApi
   };
 }("https://localhost:5001");
 
-Game.Model = function (url) {
-  //Configuratie en state waarden
-  var configMap = {
-    apiUrl: url
-  }; // Private function init
-
-  var privateInit = function privateInit() {
-    console.log(configMap.apiUrl);
-  };
+Game.Model = function () {
+  var privateInit = function privateInit() {};
 
   var _getGameState = function _getGameState(token) {
     return new Promise(function (resolve, reject) {
-      //aanvraag via Game.Data
-      Game.Data.get("".concat(configMap.apiUrl, "/api/Spel/Beurt/").concat(token)).then(function (r) {
+      Game.Data.get("api/Spel/Beurt/".concat(token)).then(function (r) {
         if (r === 0 || r === 1 || r === 2) {
           resolve(r);
         } else {
@@ -530,7 +522,7 @@ Game.Model = function (url) {
 
   var _getAfgelopen = function _getAfgelopen(token) {
     return new Promise(function (resolve, reject) {
-      Game.Data.get("".concat(configMap.apiUrl, "/api/Spel/afgelopen/").concat(token)).then(function (r) {
+      Game.Data.get("api/Spel/afgelopen/".concat(token)).then(function (r) {
         resolve(r);
       });
     });
@@ -538,7 +530,7 @@ Game.Model = function (url) {
 
   var _getGame = function _getGame(token) {
     return new Promise(function (resolve, reject) {
-      Game.Data.get("".concat(configMap.apiUrl, "/api/Spel/").concat(token)).then(function (r) {
+      Game.Data.get("api/Spel/".concat(token)).then(function (r) {
         resolve(r);
       });
     });
@@ -560,7 +552,7 @@ Game.Model = function (url) {
     getAfgelopen: _getAfgelopen,
     updateScores: _updateScores
   };
-}("https://localhost:5001");
+}();
 
 Game.Template = function () {
   // Private function init
@@ -588,7 +580,7 @@ Game.API = function () {
 
   var _getFact = function _getFact() {
     return new Promise(function (resolve, reject) {
-      Game.Data.get("https://asli-fun-fact-api.herokuapp.com/").then(function (r) {
+      Game.Data.getFromApi("https://asli-fun-fact-api.herokuapp.com/").then(function (r) {
         resolve(r);
       });
     });

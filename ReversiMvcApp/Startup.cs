@@ -81,7 +81,7 @@ namespace ReversiMvcApp
                 options.AddDefaultPolicy(
                     builder =>
                     {
-                        builder.WithOrigins("https://localhost:5001")
+                        builder.WithOrigins("https://localhost:5001", "http://localhost:5000")
                             .AllowCredentials();
                     });
             });

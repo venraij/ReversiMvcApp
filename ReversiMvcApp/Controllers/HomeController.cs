@@ -14,24 +14,26 @@ using System.Text;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.Extensions.Configuration;
 
 namespace ReversiMvcApp.Controllers
 {
     public class HomeController : Controller
     {
         private ApplicationDbContext db = new ApplicationDbContext();
-        private readonly ILogger<HomeController> _logger;
-        private readonly string baseApiUrl = "https://localhost:5001/api/";
+        private readonly IConfiguration _configuration;
+        private readonly string _baseApiUrl;
 
-        public HomeController(ILogger<HomeController> logger)
+        public HomeController(IConfiguration configuration)
         {
-            _logger = logger;
+            _configuration = configuration;
+            _baseApiUrl = _configuration["ApiUrl"] + "/";
         }
 
         [Authorize]
         public async Task<IActionResult> Index()
         {
-            string apiUrl = baseApiUrl + "spel";
+            string apiUrl = _baseApiUrl + "spel";
 
             ClaimsPrincipal currentUser = User;
             var currentUserID = currentUser.FindFirst(ClaimTypes.NameIdentifier).Value;
@@ -119,7 +121,7 @@ namespace ReversiMvcApp.Controllers
             if (spel.Speler2token == null && spel.Speler1token != currentUserID)
             {
                 spel.Speler2token = currentUserID;
-                string apiUrl = baseApiUrl + "spel/meespelen";
+                string apiUrl = _baseApiUrl + "spel/meespelen";
 
                 using (HttpClient client = new HttpClient())
                 {
@@ -149,7 +151,7 @@ namespace ReversiMvcApp.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(string omschrijving)
         {
-            string apiUrl = baseApiUrl + "spel";
+            string apiUrl = _baseApiUrl + "spel";
             string currentUserID = User.FindFirst(ClaimTypes.NameIdentifier).Value;
 
             Spel spel = new Spel();
